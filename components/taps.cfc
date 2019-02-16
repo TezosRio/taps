@@ -66,7 +66,12 @@
       <cfset totalPaid = 0>
      
       <!--- Create a log file identified by current cycle --->
-      <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="write" output="">
+      <cfset strPath = ExpandPath( "./" ) />
+      <cfif Not DirectoryExists("#strPath#/logs")>
+         <cfdirectory action = "create" directory="#strPath#/logs" />
+      </cfif>
+
+      <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite">
 
       <!--- Check the mode TAPS is working in (Simulation or On) --->
       <!--- Also, get client_path, base_dir, and node_alias from the local database --->
