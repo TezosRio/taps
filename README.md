@@ -26,7 +26,7 @@ Many features are not fully tested/implemented yet.
 
 ## Credits
 
-- TAPS is a Tezos.Rio team open-source product.
+- TAPS is a [Tezos.Rio](https://tezos.rio) team open-source product.
 - TAPS uses [TzScan.io](https://tzscan.io) API to fetch information from the Tezos blockchain.
 - TAPS uses [Tezos-client](https://tezos.com) software to make transfers and inject operations on Tezos blockchain.
 
