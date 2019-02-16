@@ -13,27 +13,29 @@ To use this software you need to be a Tezos Baker with good experience. Follow t
 1) Download Lucee Server from [https://download.lucee.org/](https://download.lucee.org/)
 2) Download H2 Database from Lucee Extensions [https://download.lucee.org/](https://download.lucee.org/)
 3) Install Lucee.
-   3.1) Get root privileges for the download folder, click with right mouse button over Lucee icon and choose OPEN.
-   3.2) Go through Lucee setup wizard, maintaining default installation options.
-   3.3) Choose a password for Lucee administration and write it down in a piece of paper.
-   3.4) Configure Lucee to start at every boot.
-   3.5) DON'T install Apache connector. We will use Lucee only for localhost (not Internet).
-   3.6) After Lucee installation, test it in browser with: http://127.0.0.1:8888/
+   - Get root privileges for the download folder, click with right mouse button over Lucee icon and choose OPEN.
+   - Go through Lucee setup wizard, maintaining default installation options.
+   - Choose a password for Lucee administration and write it down in a piece of paper.
+   - Configure Lucee to start at every boot.
+   - DON'T install Apache connector. We will use Lucee only for localhost (not Internet).
+   - After Lucee installation, test it in browser with: http://127.0.0.1:8888/
 
 4) Install H2 Database.
-   4.1) Copy the downloaded file /home/[user]/downloads/org.h2-1.3.172.lex to folder /opt/lucee/tomcat/lucee-server/deploy/
-   4.2) Wait a minute. Lucee detects the extension and installs it automatically. That's it!
+   - Copy the downloaded file /home/[user]/downloads/org.h2-1.3.172.lex to folder /opt/lucee/tomcat/lucee-server/deploy/
+   - Wait a minute. Lucee detects the extension and installs it automatically. That's it!
 
-5) Clone TAPS from GitHub with: git clone 
+5) Clone TAPS from GitHub with:
+
+   git clone https://github.com/TezosRio/taps.git
 
 6) Install Taps.
-   6.1) Copy TAPS folder to /opt/lucee/tomcat/webapps/
-   6.2) Start TAPS in your browser with http://127.0.0.1:8888/taps/index.cfm
-   6.3) Log in TAPS with default user/pass: admin/admin.
+   - Copy TAPS folder to /opt/lucee/tomcat/webapps/
+   - Start TAPS in your browser with http://127.0.0.1:8888/taps/index.cfm
+   - Log in TAPS with default user/pass: admin/admin.
    
 7) Usage.
-   7.1) Go to TAPS SETUP page and enter your Baker's details. TAPS starts in simulation mode,
-        so, don't worry, any real transfers will be done.
+   - Go to TAPS SETUP page and enter your Baker's details. TAPS starts in simulation mode,
+     so, don't worry, any real transfers will be done.
         
 
 ## Disclaimer
