@@ -20,6 +20,10 @@ To use this software you need to be a Tezos Baker with good experience. Follow t
    - DON'T install Apache connector. We will use Lucee only for localhost (not Internet).
    - After Lucee installation, test it in browser with: http://127.0.0.1:8888/
 
+   You can start/stop Lucee Application Server with:
+   
+       sudo /opt/lucee/lucee_ctl [start] [stop]
+
 4) Install H2 Database.
    - Copy the downloaded file /home/[user]/downloads/org.h2-1.3.172.lex to folder /opt/lucee/tomcat/lucee-server/deploy/
    - Wait a minute. Lucee detects the extension and installs it automatically. That's it!
