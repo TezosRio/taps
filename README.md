@@ -28,7 +28,7 @@ To use this software you need to be a Tezos Baker with good experience. Follow t
 
    git clone https://github.com/TezosRio/taps.git
 
-6) Install Taps.
+6) Install TAPS.
    - Copy TAPS folder to /opt/lucee/tomcat/webapps/
    - Start TAPS in your browser with http://127.0.0.1:8888/taps/index.cfm
    - Log in TAPS with default user/pass: admin/admin.
