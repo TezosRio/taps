@@ -170,7 +170,9 @@
 	 		            <cfset share = #((arrayDelegators[key].balance / totalStakingBalance) / militez) * 100#> 
 				    <cfset delegator_reward = (totalRewards * share) / 100>
 
-                                    <cfif #delegator_reward# GTE 0.10> <!--- Consider only higher than or equal 0.10 xtz --->
+                                    <!--- Consider only if share higher than 0 xtz --->
+                                    <!--- Consider only if reward higher than or equal 0.10 xtz --->
+                                    <cfif #share# GTE 0.01 and #delegator_reward# GTE 0.10>
 
 					    <cfset QueryAddRow(queryDelegators, 1)> 
 					    <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))> 

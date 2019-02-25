@@ -53,6 +53,7 @@
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
+          <cfif #settings.mode# NEQ "off">
             <cfif #settings.status# EQ true>
 
                <cfset reload = false>
@@ -125,13 +126,19 @@
                        Please wait until the next cycle for this information to be available.
                     </cfif>
 
+                 <cfelse>
+                    <br><br><br><br><br>
+                    <table width="100%">
+                       <tr><td align="center"><img src="imgs/spin.gif" width="50" height="50"><br></td></tr>
+                       <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
+                    </table>
+                 </cfif>
+
                <cfelse>
-                  <br><br><br><br><br>
-                  <table width="100%">
-                     <tr><td align="center"><img src="imgs/spin.gif" width="50" height="50"><br></td></tr>
-                     <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
-                  </table>
-               </cfif>
+                  <br>
+                  TAPS status is set to OFF.<br>
+                  Please go to menu option STATUS and choose another option.<br>
+               </cfif>     
 
             <cfelse>
                <br>

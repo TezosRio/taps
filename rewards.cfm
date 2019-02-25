@@ -44,39 +44,47 @@
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
-            <cfif #settings.status# EQ true>
+            <cfif #settings.mode# NEQ "off">
 
-               <cfset reload = false>
+               <cfif #settings.status# EQ true>
 
-               <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
-               <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
+		       <cfset reload = false>
 
-                  <table class="table table-taps-rewards">
-                     <thead class="head-table-taps">
-                        <tr>
-                           <th style="text-align:center;" scope="col">Cycle Number</th>
-                           <th style="text-align:center;" scope="col">Rewards Status</th>
-                        </tr>
-                     </thead>
+		       <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
+		       <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 
-                     <tbody>
+		          <table class="table table-taps-rewards">
+		             <thead class="head-table-taps">
+		                <tr>
+		                   <th style="text-align:center;" scope="col">Cycle Number</th>
+		                   <th style="text-align:center;" scope="col">Rewards Status</th>
+		                </tr>
+		             </thead>
 
-        	       <cfloop from="#rewards.recordCount#" to="1" step="-1" index="i">  
-	                 <tr>
-	                    <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.cycle[i]#</td>
-	                    <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.status[i]#</td>
-	                </tr>
-	              </cfloop>
-                     </tbody>
-	           </table>
+		             <tbody>
+
+			       <cfloop from="#rewards.recordCount#" to="1" step="-1" index="i">  
+			         <tr>
+			            <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.cycle[i]#</td>
+			            <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.status[i]#</td>
+			        </tr>
+			      </cfloop>
+		             </tbody>
+			   </table>
+
+                <cfelse>
+                   <br><br><br><br><br><br>
+                   <table width="100%">
+                      <tr><td align="center"><img src="imgs/spin.gif" width="50" height="50"><br></td></tr>
+                      <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
+                   </table>
+                </cfif>
 
             <cfelse>
-               <br><br><br><br><br><br>
-               <table width="100%">
-                  <tr><td align="center"><img src="imgs/spin.gif" width="50" height="50"><br></td></tr>
-                  <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
-               </table>
-            </cfif>
+               <br>
+               TAPS status is set to OFF.<br>
+               Please go to menu option STATUS and choose another option.<br>
+            </cfif>     
 
          <cfelse>
             <br>

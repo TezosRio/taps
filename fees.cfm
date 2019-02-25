@@ -66,6 +66,7 @@
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
+           <cfif #settings.mode# NEQ "off">
             <cfif #settings.status# EQ true>
 
                <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
@@ -116,6 +117,12 @@
                   <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
                </table>
             </cfif>
+
+          <cfelse>
+             <br>
+             TAPS status is set to OFF.<br>
+             Please go to menu option STATUS and choose another option.<br>
+          </cfif>     
 
          <cfelse>
             <br>

@@ -88,6 +88,13 @@
 
    <cfif #validation# EQ "ok">
 
+      <!--- Force mode upon condition --->
+      <cfif #optFunding# EQ "native">
+         <cfset op_mode_force = #application.mode_no#>
+      <cfelse>
+         <cfset op_mode_force = #application.mode_try#>
+      </cfif>
+
 	   <!--- Save settings --->
 	   <cfinvoke component="components.database" method="saveSettings" baker="#baker#" fee="#fee#" freq="#freq#"   
 		     user="#user#"
@@ -97,7 +104,7 @@
 		     clientPath="#tezosClientPath#"
 		     nodeAlias="#tezosNodeAlias#"
                      baseDir="#tezosBaseDir#"
-                     mode="#application.mode_try#"
+                     mode="#op_mode_force#"
                      fundsOrigin="#optFunding#"
 		     returnVariable="saveResult" />
     
@@ -352,11 +359,20 @@
 	         return 'idFreq_type';
 	      }
 
+	      if (document.getElementById('idFreq').value < 10)
+	      {
+	         return 'idFreq_min';
+	      }
+
 	      if (! isNumeric(document.getElementById('idLuceePort').value) )
 	      {
 	         return 'idLuceePort_type';
 	      }
 
+              if ((document.getElementById('idBaker').value.substr(0,2) != 'tz') || (document.getElementById('idBaker').value.length < 30))
+	      {
+	         return 'idBaker_invalid';
+	      }
 	      return true;
 	   }
 
@@ -380,6 +396,14 @@
               else if (sufix == 'test')
               {
                  document.getElementById(inputFieldName + '_req').value=' Required to run';
+              }
+              else if (sufix == 'invalid')
+              {
+                 document.getElementById(inputFieldName + '_req').value=' Invalid implicit address';
+              }
+              else if (sufix == 'min')
+              {
+                 document.getElementById(inputFieldName + '_req').value=' Minimum is 10 minutes';
               }
 
               if (inputFieldName + '_req')
