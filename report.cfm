@@ -1,33 +1,3 @@
-<cfif not isUserLoggedIn()>
-   <cflocation url="index.cfm">
-</cfif>
-
-<cfscript>
-   setLocale("English (us)");
-</cfscript>
-
-<cfset totalSum = 0>
-<cfset reload = true>
-
-<!DOCTYPE html>
-<html lang="en">
-   <head>
-      <meta charset="utf-8">
-      <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-      <meta http-equiv="cache-control" content="no-cache">
-
-      <!-- CSS Bootstrap-->
-      <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"> 
-      <!-- CSS Page-->
-      <link rel="stylesheet" type="text/css" href="css/estilo.css">
-
-      <script src="js/jquery-3.2.1.min.js"></script>
-
-   </head>
-
-   <body>
-      <section class="box-content-rewards">
          <cfoutput>
 
          <h1 class="title-baker">
@@ -91,35 +61,3 @@
 		     </table>
 		  </cfform>
 
-               <cfelse>
-                  <br>
-                  Until now, no delegators payments have been registered on local database.<br>
-                  Please wait until the next cycle for this information to be available.
-               </cfif>  
-                    
-            <cfelse>
-               <br><br><br><br><br><br>
-               <table width="100%">
-                  <tr><td align="center"><img src="imgs/spin.gif" width="50" height="50"><br></td></tr>
-                  <tr style="line-height:30px;text-align:center;"><td align="center">Fetching... Please wait</td></tr>
-               </table>
-            </cfif>
-
-         <cfelse>
-            <br>
-            There is no configuration saved on settings.<br>
-            Please go to SETUP first.<br>
-         </cfif>
-
-      </cfoutput>
-</section>
-
-<cfif #reload# EQ true>
-   <!---  Reload page until fetch completed --->
-   <script language="javascript">
-      setTimeout(function(){ location.reload(); }, 5000);
-   </script>
-</cfif>
-
-</body>
-</html>
