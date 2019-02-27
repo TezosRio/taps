@@ -14,6 +14,9 @@
 <cfset THIS.SessionManagement = true />
 <cfset THIS.ClientManagement = false />
 <cfset THIS.LoginStorage = "session" />
+<cfset THIS.applicationTimeout = createTimeSpan( 365, 0, 0, 0 ) />
+<cfset this.mappings = structNew() />
+<cfset this.mappings["/components"] = getDirectoryFromPath(getCurrentTemplatePath()) & "components/" />
 
 <!--- Set default charset to UTF-8 --->
 <cfprocessingdirective pageencoding="UTF-8">
@@ -44,25 +47,31 @@
         output="false">
 
        <!--- Create some application constants --->
-       <cfset application.tz =  "&##42793;">
+       <!--- Do not change                     --->
+       <cfset application.tz = "&##42793;">
+       <cfset application.version = "0.9.8">
+       <cfset application.militez = 1000000>
+       <cfset application.port = 8888>
+       <cfset application.mode_no = "0">
+       <cfset application.mode_try = "1">
+       <cfset application.mode_yes = "2">
+       <cfset application.mode_desc_no = "off">
+       <cfset application.mode_desc_try = "simulation">
+       <cfset application.mode_desc_yes = "on">
+       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-0.9.6.jar">
+       <cfset application.tz_default_operation_fee = "0.05">
 
-       <cfset application.version = "0.8.3">
+       <!--- Some application variables initialization --->
+       <!--- Do not change                             --->
        <cfset application.bakerId = "">
        <cfset application.fee="">
        <cfset application.freq="">
-       <cfset application.militez=1000000>
-       <cfset application.port=8888>
-       <cfset application.mode_no="0">
-       <cfset application.mode_try="1">
-       <cfset application.mode_yes="2">
-       <cfset application.mode_desc_no="off">
-       <cfset application.mode_desc_try="simulation">
-       <cfset application.mode_desc_yes="on">
        <cfset application.user = "">
 
-       <!--- If not behind a proxy, leave blank --->
-       <cfset application.proxyServer="">
-       <cfset application.proxyPort="80">
+       <!--- Application variables you may edit --->
+       <cfset application.encSeed = "?73205!"> <!--- Used to hash sensible information along the code --->
+       <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
+       <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
 
        <!--- Create needed database tables --->
        <cfinvoke component="components.environment" method="createTables">

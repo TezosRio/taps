@@ -68,8 +68,7 @@
       <cfelse>
  
          <!---
-         Something is wrong. Blockchain has NOT delivered rewards.
-         Rewards distribution cancelled.
+         Cycle did not change yet, or something is wrong. Blockchain has NOT yet delivered rewards.
          --->
 
       </cfif>

@@ -2,6 +2,7 @@
 <cfset passdw="">
 <cfset ok="">
 <cfset wrongLogin = false>
+<cfset dbError = false>
 
 <cfif #isDefined('form.user')#>
    <cfset user="#form.user#">
@@ -29,13 +30,46 @@
       <cfset wrongLogin = false>
 
       <!--- System Health-check --->
-      <cfinvoke component="components.taps" method="healthCheck" />
+      <cfinvoke component="components.taps" method="healthCheck"  />
+
+      <!--- Opens the TAPS user native wallet, if configured --->
+      <cfset session.myWallet = "">
+      <cftry>
+      <cfthread action="run" name="thread_open_wallet">
+	      <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
+
+	      <cfif #settings.recordCount# GT 0>
+		 <cfif #len(settings.wallet_hash)# GT 0 and #len(settings.wallet_salt)# GT 0>
+		    <!--- User has configured TAPS successfully and also has created a native wallet --->
+
+		    <!--- Decrypt passphrase from the local database with user password --->
+		    <cfset passphrase = decrypt('#settings.phrase#', '#passdw#')>
+
+		    <!--- Authenticate the owner of wallet with passphrase --->
+		    <cfinvoke component="components.database" method="authWallet" bakerId="#application.bakerId#" passdw="#passphrase#" returnVariable="authResult">
+		    <cfif #authResult# EQ true>
+		       <!--- Get TezosJ_SDK TezosWallet class --->
+		       <cfset session.tezosJ = createObject("java", "milfont.com.tezosj.model.TezosWallet", "./#application.TezosJ_SDK_location#")>
+		       <!--- Instantiate the wallet with the user passphrase --->   
+		       <cfset strPath = ExpandPath( "./" ) />
+		       <cfset session.myWallet = session.tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
+		       <cfset session.totalAvailable = "#session.myWallet.getBalance()#">
+		    </cfif>
+		 </cfif>
+	      </cfif>
+      </cfthread> 
+      <cfcatch>
+      </cfcatch>
+      </cftry>
 
       <!--- Redirect to main menu ---> 
       <cflocation url="menu.cfm">
 
-   <cfelse>
+   <cfelseif #result# EQ false>
       <cfset wrongLogin = true>
+
+   <cfelse>
+      <cfset dbError = true>
    </cfif>
 
 </cfif>
@@ -120,31 +154,44 @@
         <td><img src="imgs/taps_logo_dourada.png"<td>
       </tr>
 
-      <tr>
-         <td>
-            <label>
-               <span class="text-input-taps">Username</span><span style="color:red;visibility:hidden;" id="userReqId">&nbsp;Required</span>
-               <cfinput type="text" id="idUser" name="user" class="input-taps" size="30" placeholder="User login" value="">
-            </label>
-         </td>
-      </tr>
+      <cfif #dbError# EQ false>
+	      <tr>
+		 <td>
+		    <label>
+		       <span class="text-input-taps">Username</span><span style="color:red;visibility:hidden;" id="userReqId">&nbsp;Required</span>
+		       <cfinput type="text" id="idUser" name="user" class="input-taps" size="30" placeholder="User login" value="">
+		    </label>
+		 </td>
+	      </tr>
 
-      <tr>
-         <td>
-            <label>
-               <span class="text-input-taps">Password</span><span style="color:red;visibility:hidden;" id="passdwReqId">&nbsp;Required</span>
-               <cfinput type="password" id="idpassdw" name="passdw" class="input-taps" size="30" placeholder="Type your password" maxlength="50" value="">
-               <cfinput type="text" id="idVersion" name="version" style="font-size: small;text-align:right;width:100%;background-color:white;border:none;color:##888888;" value="v#application.version#" readonly disabled>
-            </label>
+	      <tr>
+		 <td>
+		    <label>
+		       <span class="text-input-taps">Password</span><span style="color:red;visibility:hidden;" id="passdwReqId">&nbsp;Required</span>
+		       <cfinput type="password" id="idpassdw" name="passdw" class="input-taps" size="30" placeholder="Type your password" maxlength="50" value="">
+		       <cfinput type="text" id="idVersion" name="version" style="font-size: small;text-align:right;width:100%;background-color:white;border:none;color:##888888;" value="v#application.version#" readonly disabled>
+		    </label>
+		    </td>
+	      </tr>
+	      <tr>
+		 <td align="right" colspan="2">
+		    <span style="color:red;visibility:<cfif #wrongLogin#>visible<cfelse>hidden</cfif>;" id="wrongLoginId">Wrong username or password&nbsp;&nbsp;&nbsp;&nbsp;</span>
+		    <button type="button" name="btnSubmit" value="Login" class="botao-taps" onClick="javascript: var result = validate(); if (result == true){ hideReqFields(); document.getElementById('ok').value='1';document.form.submit(); } else { showRequiredField(result); }">Login</button>
+		    <cfinput name="ok" id="ok" type="hidden" value="0">
+		 </td>
+	      </tr>
+
+      <cfelse>
+         </table>
+         <table style="width:600px;">
+         <tr style="width:500px;">
+            <td colspan="2">
+               TAPS requires H2 database Lucee extension, that was not detected.<br>
+               Please download H2 extension from <a href="https://download.lucee.org/" target="_blank" style="text-decoration:underline;">Lucee download page</a>, then<br>
+               copy the ".LEX" file to /lucee-server/deploy of running Lucee<br>installation and try again.<br>
             </td>
-      </tr>
-      <tr>
-         <td align="right" colspan="2">
-            <span style="color:red;visibility:<cfif #wrongLogin#>visible<cfelse>hidden</cfif>;" id="wrongLoginId">Wrong username or password&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <button type="button" name="btnSubmit" value="Login" class="botao-taps" onClick="javascript: var result = validate(); if (result == true){ hideReqFields(); document.getElementById('ok').value='1';document.form.submit(); } else { showRequiredField(result); }">Login</button>
-            <cfinput name="ok" id="ok" type="hidden" value="0">
-         </td>
-      </tr>
+         </tr>
+      </cfif>
       </table>
       </cfform>
 

@@ -52,6 +52,9 @@
             </div>
             <ul class="list-unstyled components">
                 <li>
+                    <a href="menu.cfm?opt=wallet" id="item-menu" name="wallet">WALLET</a>
+                </li>
+                <li>
                     <a href="menu.cfm?opt=setup" id="item-menu" name="setup">SETUP</a>
                 </li>
                 <li>
@@ -90,7 +93,7 @@
                         <span></span>
                     </button>
                             
-            <cfoutput><iframe style="margin-top:20px;width:100%;" src="#opt#.cfm" name="iframe" frameborder="0" scrolling="no" onload="resizeIframe(this)"></iframe></cfoutput>
+            <cfoutput><iframe style="margin-top:20px;width:100%;" src="#opt#.cfm" name="iframe" id="idIframeMain" frameborder="0" scrolling="no" onload="resizeIframe(this)"></iframe></cfoutput>
             <div class="embed-responsive embed-responsive-21by9"></div>
 
        </section>

@@ -61,7 +61,7 @@
 	         return false;
 	      }
 
-              if (!confirm('This will do a factory reset and erase all data. Do you really want to RESET taps?'))
+              if (!confirm('This will do a factory reset and erase all data, including configured wallets. Do you really want to RESET taps?'))
 	         return false;
 
 
@@ -113,6 +113,11 @@
          <cfif #settings.recordCount# GT 0>
             This will erase all data stored on TAPS system.<br>
             This operation is similar to a factory reset.<br>
+            <br>
+            <div style="text-align: justify;text-justify: inter-word;">CAUTION: IF YOU HAVE CONFIGURED A NATIVE WALLET ON TAPS, YOU WILL
+            LOOSE ACCESS TO IT AFTER RESET. BE SURE TO HAVE THE PASSPHRASE AND MNEMONICS
+            WRITTEN DOWN IN A PIECE OF PAPER WITH YOU, OTHERWISE WALLET FUNDS WILL BE LOST.
+            AND THERE IS NO WAY TO RECOVER IT.</div>
             <br>
             To proceed, type your password twice and hit RESET button.<br>
             After that, system will log out and user/password will be restored to defaults.<br>

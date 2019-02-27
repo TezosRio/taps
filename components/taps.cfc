@@ -22,6 +22,8 @@
    <!--- Some information is stored in the local database in the process, so it is possible to check them later --->
    <!--- Log files with the results from executing tezos-client transfers are also written, in the folder taps/logs --->
    <!--- When operating in Simulation mode, everything will be recorded, but payments will not be made for real --->
+   <!--- Payments are made only if rewards are greater then or equal 0.10 xtz --->
+   <!--- Transfer fee is set to 0.05 xtz --->
    <cffunction name="distributeRewards">
       <cfargument name="localPendingRewardsCycle" required="true" type="number" />
       <cfargument name="networkPendingRewardsCycle" required="true" type="number" />
@@ -34,6 +36,12 @@
       <cfset var nodeAlias = "">
       <cfset var baseDir = "">
       <cfset var operationResult = "">
+      <cfset var fundsOrigin = "">
+      <cfset var strPath = "">
+      <cfset var myWallet = "">
+      <cfset var from = "">
+      <cfset var TezosJ = "">
+      <cfset var passphrase = "">
 
       <!--- Override Lucee Administrator settings for request timeout --->
       <cfsetting requestTimeout = #tenMinutes#>
@@ -75,15 +83,36 @@
 
       <!--- Check the mode TAPS is working in (Simulation or On) --->
       <!--- Also, get client_path, base_dir, and node_alias from the local database --->
-      <cfinvoke component="database" method="getSettings" returnVariable="settings">
+      <!--- Check if user configured to get resources from embedded native wallet ---> 
+      <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
       <cfif #settings.recordCount# GT 0>
          <cfset operationMode = #settings.mode#>
          <cfset clientPath = "#settings.client_path#">
          <cfset baseDir = "#settings.base_dir#">
-         <cfset nodeAlias = "#settings.node_alias#">          
+         <cfset nodeAlias = "#settings.node_alias#">
+         <cfset fundsOrigin = "#settings.funds_origin#">          
       <cfelse>
          <cfset operationMode = "#application.mode_desc_try#">
       </cfif>
+
+      <!--- If funds origin are set to use embedded native wallet, instantiate TezosJ_SDK_plainJava and open the wallet --->
+      <cfif #fundsOrigin# EQ "native">
+            <cfset strPath = ExpandPath( "./" ) />
+
+            <!--- Get TezosJ_SDK TezosWallet class --->
+            <cfset tezosJ = createObject("java", "milfont.com.tezosj.model.TezosWallet", "#strPath#/#application.TezosJ_SDK_location#")>
+
+	    <!--- Decrypt passphrase from the local database with app password --->
+	    <cfset passphrase = decrypt('#settings.app_phrase#', '#application.encSeed#')>
+
+	    <!--- Authenticate the owner of wallet with passphrase --->
+	    <cfinvoke component="components.database" method="authWallet" bakerId="#application.bakerId#" passdw="#passphrase#" returnVariable="authResult">
+	    <cfif #authResult# EQ true>
+               <!--- Instantiate a new wallet from previously saved file --->
+               <cfset myWallet = tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
+               <cfset from = "#myWallet.getPublicKeyHash()#">
+            </cfif>
+     </cfif>   
 
       <!--- Make rewards payment to delegators --->  
       <!--- Loop through delegators and do transfers (or simulate them, depending on mode) --->
@@ -108,44 +137,86 @@
                   <cfset paymentValue = #arguments.delegators.rewards#>
                </cfif>
 
-               <!--- Now we have to build dynamically the command that will be passed to the Tezos-client to be executed --->
+               <!--- Time to check what will be the origin of the funds: Native wallet or node funds --->
+               <cfif #fundsOrigin# EQ "node">
 
-               <!--- Build Tezos-client transfer command --->
-               <cfset tezosCommand = "@@@clientPath@@@/tezos-client --base-dir @@@baseDir@@@ transfer @@@value@@@ from @@@nodeAlias@@@ to @@@destAddress@@@">
+                  <!--- Funds origin node, then we have to build dynamically the command that will be passed to the Tezos-client to be executed --->
+
+                  <!--- Build Tezos-client transfer command --->
+                  <cfset tezosCommand = "@@@clientPath@@@/tezos-client --base-dir @@@baseDir@@@ transfer @@@value@@@ from @@@nodeAlias@@@ to @@@destAddress@@@">
                
-               <!--- Decide whether to do real transfers or simulate them, according to the configured mode --->
-               <cfif #operationMode# EQ "#application.mode_desc_try#">
-                  <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
-                  <cfset operationResult="simulated">
-               <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
-                  <cfset tezosArguments = "--fee 0.05">                   <!--- For real! Will pay! --->
-                  <cfset operationResult="paid">
-               <cfelse> <!--- fallback is simulation mode --->
-                  <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
-                  <cfset operationResult="simulated"> 
-              </cfif>
+                  <!--- Decide whether to do real transfers or simulate them, according to the configured mode --->
+                  <cfif #operationMode# EQ "#application.mode_desc_try#">
+                     <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
+                     <cfset operationResult="simulated">
+                  <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
+                     <cfset tezosArguments = "--fee 0.05">                   <!--- For real! Will pay! --->
+                     <cfset operationResult="paid">
+                  <cfelse> <!--- fallback is simulation mode --->
+                     <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
+                     <cfset operationResult="simulated"> 
+                  </cfif>
 
-               <!--- Make proper substitutions in the dynamic command --->
-               <cfset tezosCommand = replace(tezosCommand, "@@@clientPath@@@", "#clientPath#")>
-               <cfset tezosCommand = replace(tezosCommand, "@@@baseDir@@@", "#baseDir#/.tezos-client")>
-               <cfset tezosCommand = replace(tezosCommand, "@@@value@@@", "#paymentValue#")>
-               <cfset tezosCommand = replace(tezosCommand, "@@@nodeAlias@@@", "#nodeAlias#")>
-               <cfset tezosCommand = replace(tezosCommand, "@@@destAddress@@@", "#arguments.delegators.address#")>
+                  <!--- Make proper substitutions in the dynamic command --->
+                  <cfset tezosCommand = replace(tezosCommand, "@@@clientPath@@@", "#clientPath#")>
+                  <cfset tezosCommand = replace(tezosCommand, "@@@baseDir@@@", "#baseDir#/.tezos-client")>
+                  <cfset tezosCommand = replace(tezosCommand, "@@@value@@@", "#paymentValue#")>
+                  <cfset tezosCommand = replace(tezosCommand, "@@@nodeAlias@@@", "#nodeAlias#")>
+                  <cfset tezosCommand = replace(tezosCommand, "@@@destAddress@@@", "#arguments.delegators.address#")>
+                  <!--- Now we have the dynamic command ready to be executed by Tezos-client --->
 
-               <!--- Now we have the dynamic command ready to be executed by Tezos-client. Let's do it --->
+               <cfelseif #fundsOrigin# EQ "native">
 
+                  <!--- Funds origin native --->
+
+                  <!--- Decide whether to do real transfers or simulate them, according to the configured mode --->
+                  <cfif #operationMode# EQ "#application.mode_desc_try#">
+                     <cfset operationResult="simulated">
+                  <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
+                     <cfset operationResult="paid">
+                  <cfelse> <!--- fallback is simulation mode --->
+                     <cfset operationResult="simulated"> 
+                  </cfif>
+
+               </cfif>
+   
+               <!--- Now it's the time for action --->
                <cftry>
 
-                   <!-- Execute Tezos-client transfer command --->
-	           <cfexecute variable="result"
+                  <!--- If funds origin is node, execute transfer using tezos-client software --->
+                  <cfif #fundsOrigin# EQ "node">
+
+                      <!-- Execute Tezos-client transfer command --->
+	              <cfexecute variable="result"
                               errorvariable="error"
                               timeout="#tenMinutes#"
                               terminateontimeout = false
                               name="#tezosCommand#"
                               arguments="#tezosArguments#">
-                   </cfexecute>
+                      </cfexecute>
 
-		   <cfoutput>
+                  <!--- Otherwise, if funds origin is native, transfer from the embedded native wallet --->
+                  <cfelseif #fundsOrigin# EQ "native">
+                      
+                     <!--- If operation mode is ON, then make real transfers --->
+                     <cfif #operationMode# EQ "#application.mode_desc_yes#">
+
+                         <!--- Send funds from native wallet, using TezosJ_SDK_plainJava library --->
+                         <cfset result = myWallet.send("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "", "")>
+
+                         <!--- Check for errors --->
+                         <cfset errCheck = findNoCase("error", "#result#")>
+                         <cfif #errCheck# GT 0>
+                            <cfthrow message="Could not send from native wallet" detail="#result#">
+                         </cfif>
+
+                     <cfelse>
+                        <cfset result = "Simulated send #paymentValue# xtz from #from# to #arguments.delegators.address#"> 
+                     </cfif>
+
+                  </cfif>
+
+                  <cfoutput>
 
                       <!--- Write Log files with Tezos-client execution results in folder taps/logs --->
                       <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="append" output="#result#">
@@ -167,11 +238,11 @@
                       <!--- Accumulate the total paid --->
                       <cfset totalPaid = totalPaid + #paymentValue#>
 
-                   </cfoutput>
+                  </cfoutput>
 
                <cfcatch>
-                  <!--- If some error ocurred in Tezos-client transfer execution --->
-                  <cfset errorArray[i] = "#arguments.delegators.address#"> 
+                  <!--- If some error ocurred in Tezos-client transfer execution OR TezosJ_SDK transfer --->
+                  <cfset errorArray[i] = "#arguments.delegators.address#">
                   <cfset i = i + 1>
                   
                   <!--- Save the error information on delegator payment table in the local database --->
@@ -203,43 +274,55 @@
           AND DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy')
        </cfquery>
 
+      <cfif #fundsOrigin# EQ "native">
+         <!--- "Close" the native wallet --->
+         <cfset myWallet = "">
+         <cfset TezosJ = "">
+      </cfif>
+
       <!--- Restore default Lucee Administrator settings for request timeout --->
       <cfsetting requestTimeout = #fiftySeconds#>
 
    </cffunction>
 
 
-   <cffunction name="authenticate" returnType="boolean">
+   <cffunction name="authenticate" returnType="any">
       <cfargument name="user" required="true" type="string" />
       <cfargument name="passdw" required="true" type="string" />
 
       <cfset var result = false>
 
-      <!--- Verify if there is no user configured yet --->
-      <cfquery name="verify_configured_user" datasource="ds_taps">
-         SELECT pass_hash, hash_salt
-         FROM settings
-      </cfquery>
+      <cftry>
+	      <!--- Verify if there is no user configured yet --->
+	      <cfquery name="verify_configured_user" datasource="ds_taps">
+		 SELECT pass_hash, hash_salt
+		 FROM settings
+	      </cfquery>
 
-      <!--- If there is a user and also a saved password hash --->
-      <cfif (#verify_configured_user.recordcount# GT 0) and (#len(verify_configured_user.pass_hash)# GT 0)>
-         <!--- Verify if the hash matches --->
-         <cfset salt = #verify_configured_user.hash_salt#>
-         <cfset hashedPassword = Hash(#arguments.passdw# & #salt#, "SHA-512") />
+	      <!--- If there is a user and also a saved password hash --->
+	      <cfif (#verify_configured_user.recordcount# GT 0) and (#len(verify_configured_user.pass_hash)# GT 0)>
+		 <!--- Verify if the hash matches --->
+		 <cfset salt = #verify_configured_user.hash_salt#>
+		 <cfset hashedPassword = Hash(#arguments.passdw# & #salt#, "SHA-512") />
 
-         <cfif #verify_configured_user.pass_hash# EQ #hashedPassword#>
-            <cfset result = true>
-         </cfif>
+		 <cfif #verify_configured_user.pass_hash# EQ #hashedPassword#>
+		    <cfset result = true>
+		 </cfif>
 
-      <cfelse>
-         <cfif #arguments.user# eq "admin" and #arguments.passdw# EQ "admin">
-            <cfset result = true>
-         </cfif>
-      </cfif>
+	      <cfelse>
+		 <cfif #arguments.user# eq "admin" and #arguments.passdw# EQ "admin">
+		    <cfset result = true>
+		 </cfif>
+	      </cfif>
 
-      <cfif #result# EQ true>
-         <cfset application.user = "#arguments.user#">
-      </cfif>
+	      <cfif #result# EQ true>
+		 <cfset application.user = "#arguments.user#">
+	      </cfif>
+
+      <cfcatch>
+         <cfset result = "db_error">
+      </cfcatch>
+      </cftry>
 
       <cfreturn result>
    </cffunction>
@@ -471,7 +554,6 @@
       </cfcatch>
       </cftry>
    </cffunction>
-
 
 </cfcomponent>
 

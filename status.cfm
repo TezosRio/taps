@@ -79,6 +79,14 @@
 
          <cfif #settings.recordCount# GT 0>
 
+            <!--- If under the "native" mode, check if TAPS has a native wallet configured --->
+            <cfif #settings.funds_origin# EQ "native">
+               <cfif #len(settings.wallet_hash)# EQ 0>
+                  <!--- Force update os STATUS with mode "OFF", until a wallet is created --->
+                  <cfset statusValue="0">
+               </cfif>
+            </cfif>
+
             <cfif #statusValue# EQ "">
                <cfinvoke component="components.database" method="getStatusValue" description="#settings.mode#" returnVariable="statusValue">
             <cfelse>        
@@ -97,14 +105,14 @@
 
             <br>
             <cfform name="form" action="status.cfm" method="post">
-               <table>
+               <table id="idRangeTable">
                   <tr style="outline:none; !important;">
                      <td align="right">
-                        <label><span class="text-input-taps" style="color:black;" onClick="document.getElementById('idStatus').value='#application.mode_no#';">Off</span></label>
+                        <label><span class="text-input-taps" id="idSpanBlack" style="color:black;" onClick="document.getElementById('idStatus').value='#application.mode_no#';">Off</span></label>
                      </td>
                      <td style="outline:none; !important;"><input type="range" id="idStatus" name="statusValue" min="0" max="2" value="#statusValue#" step="1" style="width:300px;outline: none; !important;" class="nooutline"></td>
                      <td align="left">
-                        <label>&nbsp;<span class="text-input-taps" style="color:red;" onClick="document.getElementById('idStatus').value='#application.mode_yes#';">On</span></label>
+                        <label>&nbsp;<span class="text-input-taps" id="idSpanRed" style="color:red;" onClick="document.getElementById('idStatus').value='#application.mode_yes#';">On</span></label>
                      </td>
                      <td>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -118,7 +126,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <label><span class="text-input-taps" style="color:green;" onClick="document.getElementById('idStatus').value='#application.mode_try#';">Simulation</span></label>
+                        <label><span class="text-input-taps"  id="idSpanGreen" style="color:green;" onClick="document.getElementById('idStatus').value='#application.mode_try#';">Simulation</span></label>
                      </td>
                   </tr>
                </table>
@@ -127,7 +135,17 @@
             <br><br>
 
             <cfif #updateResult# EQ "true">
-               <script language="javascript">alert('Status updated successfully');</script>
+               <cfif #settings.funds_origin# EQ "native" and #len(settings.wallet_hash)# EQ 0>
+                  <script language="javascript">
+                     alert('In native wallet mode, TAPS requires a native wallet to be configured first! Please go to menu option WALLET and create your wallet.');
+                     $("##idRangeTable").find("input,button,textarea,select,range,span").attr("disabled", "disabled");
+                     $("##idRangeTable").find("input,button,textarea,select,range,span").attr("readonly", "readonly");
+                     $("##idRangeTable").find("input,button,textarea,select,range,span").css('color', 'grey');
+                     $("##idRangeTable").find("input,button,textarea,select,range,span").removeAttr('onClick');
+                  </script>
+               <cfelse>
+                  <script language="javascript">alert('Status updated successfully');</script>
+               </cfif>
             <cfelseif #updateResult# EQ "false">
                <script language="javascript">alert('Could not update status, please try again');</script>
             </cfif>

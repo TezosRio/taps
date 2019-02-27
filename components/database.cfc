@@ -19,7 +19,7 @@
    <cffunction name="getSettings" returnType="query">
       <!--- Get settings from local database --->
       <cfquery name="getSettings" datasource="ds_taps">
-         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir
+         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir, wallet_hash, wallet_salt, phrase, app_phrase, funds_origin
          FROM settings
       </cfquery>
       <cfif #getSettings.recordCount# GT 0>
@@ -48,6 +48,7 @@
       <cfargument name="nodeAlias" required="true" type="string">
       <cfargument name="mode" required="true" type="number">
       <cfargument name="baseDir" required="true" type="string">
+      <cfargument name="fundsOrigin" required="true" type="string">
 
       <cfset var result = false>
       <cfset var modeDescription = "">
@@ -60,62 +61,75 @@
             len(#arguments.passdw#) GT 0 and
             len(#arguments.passdw2#) GT 0 and
             len(#arguments.applicationPort#) GT 0 and
-            len(#arguments.clientPath#) GT 0 and
-            len(#arguments.nodeAlias#) GT 0 and
             len(#arguments.mode#) GT 0 and
-            len(#arguments.baseDir#) GT 0>
+            len(#arguments.fundsOrigin#) GT 0 >
 
-         <!--- Test if passwords match --->
-         <cfif #arguments.passdw# EQ #arguments.passdw2#>
+        <cfif (#optFunding# EQ "node" and
+              (len(#arguments.clientPath#) GT 0 and
+               len(#arguments.nodeAlias#) GT 0 and
+               len(#arguments.baseDir#) GT 0))
+               or
+              (#optFunding# EQ "native" and
+              (len(#arguments.clientPath#) EQ 0 and
+               len(#arguments.nodeAlias#) EQ 0 and
+               len(#arguments.baseDir#) EQ 0))>
+
+		 <!--- Test if passwords match --->
+		 <cfif #arguments.passdw# EQ #arguments.passdw2#>
 	
-            <!--- cftry --->
-		 <cfif #arguments.mode# EQ #application.mode_no#>
-		    <cfset modeDescription = "off">
-		 <cfelseif #arguments.mode# EQ #application.mode_try#>
-		    <cfset modeDescription = "simulation">
-		 <cfelseif #arguments.mode# EQ #application.mode_yes#>
-		    <cfset modeDescription = "on">
+		    <cftry>
+			 <cfif #arguments.mode# EQ #application.mode_no#>
+			    <cfset modeDescription = "off">
+			 <cfelseif #arguments.mode# EQ #application.mode_try#>
+			    <cfset modeDescription = "simulation">
+			 <cfelseif #arguments.mode# EQ #application.mode_yes#>
+			    <cfset modeDescription = "on">
+			 <cfelse>
+			    <cfset modeDescription = "simulation">
+			 </cfif>  
+
+			 <!--- Generate password hash --->
+			 <cfset salt = Hash(GenerateSecretKey("AES"), "SHA-512") /> 
+			 <cfset hashedPassword = Hash(#arguments.passdw# & #salt#, "SHA-512") />
+
+			 <!--- Save settings --->
+			 <cfquery name="delete_settings" datasource="ds_taps">
+			    DELETE FROM settings;
+			 </cfquery>
+
+			 <cfquery name="save_settings" datasource="ds_taps">
+			    INSERT INTO settings
+			    (BAKER_ID, DEFAULT_FEE, UPDATE_FREQ, USER_NAME, PASS_HASH, APPLICATION_PORT, CLIENT_PATH, NODE_ALIAS, MODE, HASH_SALT, BASE_DIR, FUNDS_ORIGIN)
+			    VALUES
+			    (
+			       <cfqueryparam value="#arguments.baker#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+			       <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_DECIMAL" maxlength="6">,
+			       <cfqueryparam value="#arguments.freq#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
+			       <cfqueryparam value="#arguments.user#" sqltype="CF_SQL_VARCHAR" maxlength="100">,
+			       <cfqueryparam value="#hashedPassword#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
+			       <cfqueryparam value="#arguments.applicationPort#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
+			       <cfqueryparam value="#arguments.clientPath#" sqltype="CF_SQL_VARCHAR" maxlength="200">,
+			       <cfqueryparam value="#arguments.nodeAlias#" sqltype="CF_SQL_VARCHAR" maxlength="100">,
+			       <cfqueryparam value="#modeDescription#" sqltype="CF_SQL_VARCHAR" maxlength="20">,
+			       <cfqueryparam value="#salt#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
+		               <cfqueryparam value="#arguments.baseDir#" sqltype="CF_SQL_VARCHAR" maxlength="200">,
+		               <cfqueryparam value="#arguments.fundsOrigin#" sqltype="CF_SQL_VARCHAR" maxlength="20">
+			     )
+			 </cfquery>
+			 <cfset result = true>
+
+		      <cfcatch>
+			 <cfset result = false>
+		      </cfcatch>
+		      </cftry>
+
 		 <cfelse>
-		    <cfset modeDescription = "simulation">
-		 </cfif>  
+	   	    <cfset result = false>
+		 </cfif>
 
-		 <!--- Generate password hash --->
-		 <cfset salt = Hash(GenerateSecretKey("AES"), "SHA-512") /> 
-		 <cfset hashedPassword = Hash(#arguments.passdw# & #salt#, "SHA-512") />
-
-		 <!--- Save settings --->
-		 <cfquery name="delete_settings" datasource="ds_taps">
-		    DELETE FROM settings;
-		 </cfquery>
-
-		 <cfquery name="save_settings" datasource="ds_taps">
-		    INSERT INTO settings
-		    (BAKER_ID, DEFAULT_FEE, UPDATE_FREQ, USER_NAME, PASS_HASH, APPLICATION_PORT, CLIENT_PATH, NODE_ALIAS, MODE, HASH_SALT, BASE_DIR)
-		    VALUES
-		    (
-		       <cfqueryparam value="#arguments.baker#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
-		       <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_DECIMAL" maxlength="6">,
-		       <cfqueryparam value="#arguments.freq#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
-		       <cfqueryparam value="#arguments.user#" sqltype="CF_SQL_VARCHAR" maxlength="100">,
-		       <cfqueryparam value="#hashedPassword#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
-		       <cfqueryparam value="#arguments.applicationPort#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
-		       <cfqueryparam value="#arguments.clientPath#" sqltype="CF_SQL_VARCHAR" maxlength="200">,
-		       <cfqueryparam value="#arguments.nodeAlias#" sqltype="CF_SQL_VARCHAR" maxlength="100">,
-		       <cfqueryparam value="#modeDescription#" sqltype="CF_SQL_VARCHAR" maxlength="20">,
-		       <cfqueryparam value="#salt#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
-                       <cfqueryparam value="#arguments.baseDir#" sqltype="CF_SQL_VARCHAR" maxlength="200">
-		     )
-		 </cfquery>
-		 <cfset result = true>
-
-	      <!--- cfcatch>
-		 <cfset result = false>
-	      </cfcatch>
-	      </cftry --->
-
-         <cfelse>
-   	    <cfset result = false>
-         </cfif>
+	    <cfelse>
+   	       <cfset result = false>
+	    </cfif>
 
       <cfelse>
 	 <cfset result = false>
@@ -344,16 +358,16 @@
       <cftry>
          <cfif #arguments.statusValue# EQ #application.mode_no#>
             <cfset modeDescription = "off">
-            <cfinvoke component="taps" method="pauseScheduledTask" port="#application.port#">
+            <cfinvoke component="components.taps" method="pauseScheduledTask" port="#application.port#">
          <cfelseif #arguments.statusValue# EQ #application.mode_try#>
             <cfset modeDescription = "simulation">
-            <cfinvoke component="taps" method="resumeScheduledTask" port="#application.port#">
+            <cfinvoke component="components.taps" method="resumeScheduledTask" port="#application.port#">
          <cfelseif #arguments.statusValue# EQ #application.mode_yes#>
             <cfset modeDescription = "on">
-            <cfinvoke component="taps" method="resumeScheduledTask" port="#application.port#">
+            <cfinvoke component="components.taps" method="resumeScheduledTask" port="#application.port#">
          <cfelse>
             <cfset modeDescription = "simulation">
-            <cfinvoke component="taps" method="resumeScheduledTask" port="#application.port#">
+            <cfinvoke component="components.taps" method="resumeScheduledTask" port="#application.port#">
          </cfif>  
 
          <cfquery name="local_save_delegators_fee" datasource="ds_taps">
@@ -411,7 +425,7 @@
 	      <cfif #arguments.passdw# EQ #arguments.passdw2#>
 
 		      <!--- Verify if pair user/passwd is able to authenticate --->
-                      <cfinvoke component="taps" method="authenticate" user="#arguments.user#" passdw="#arguments.current#" returnVariable="authResult">
+                      <cfinvoke component="components.taps" method="authenticate" user="#arguments.user#" passdw="#arguments.current#" returnVariable="authResult">
 
                       <cfif #authResult# EQ true>
                          <cftry>
@@ -444,6 +458,88 @@
 
       <cfreturn result>
    </cffunction>
+
+   <!--- Save wallet passphrase hash --->
+   <cffunction name="saveWallet">
+      <cfargument name="bakerId" required="true" type="string" />
+      <cfargument name="passphrase" required="true" type="string" />
+      <cfargument name="passdw" required="true" type="string" />
+
+      <cfset var result = false>
+      <cfset var encPassphrase = "">
+      <cfset var appPassphrase = "">
+
+      <!--- Test if fields have value --->
+      <cfif len(#arguments.bakerId#) GT 0 and
+            len(#arguments.passphrase#) GT 0 and
+            len(#arguments.passdw#) GT 0>
+
+        <cftry>
+           <!--- Generate passphrase hash --->
+           <cfset walletSalt = Hash(GenerateSecretKey("AES"), "SHA-512") /> 
+           <cfset walletHash = Hash(#passphrase# & #walletSalt#, "SHA-512") />
+
+           <!--- Encrypt passphrase with user login password and store it for future use on wallet openning --->
+           <cfset encPassphrase = encrypt('#arguments.passphrase#', '#arguments.passdw#')>
+
+           <!--- Create a key for the application --->
+           <cfset appPassphrase = encrypt('#arguments.passphrase#', '#application.encSeed#')>
+
+           <cfquery name="upd_wallet" datasource="ds_taps">
+              UPDATE settings
+              SET wallet_hash = <cfqueryparam value="#walletHash#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
+                  wallet_salt = <cfqueryparam value="#walletSalt#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
+                  phrase = <cfqueryparam value="#encPassphrase#" sqltype="CF_SQL_VARCHAR" maxlength="150">,
+                  app_phrase = <cfqueryparam value="#appPassphrase#" sqltype="CF_SQL_VARCHAR" maxlength="150">
+              WHERE baker_id = <cfqueryparam value="#arguments.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+           </cfquery>
+           <cfset result = true>
+        <cfcatch>
+           <cfset result = false>
+        </cfcatch>
+        </cftry>
+
+      <cfelse>
+           <cfset result = false>
+      </cfif>
+
+      <cfreturn result>
+   </cffunction>
+
+   <!--- Authenticate owner of the wallet --->
+   <cffunction name="authWallet" returnType="boolean">
+      <cfargument name="bakerId" required="true" type="string" />
+      <cfargument name="passdw" required="true" type="string" />
+
+      <cfset var result = false>
+
+      <cfif #len(arguments.bakerId)# GT 0 and #len(arguments.passdw)# GT 0>
+         <!--- Get wallet passphrase hashes --->
+         <cfquery name="load_wallet" datasource="ds_taps">
+            SELECT wallet_hash, wallet_salt
+            FROM settings
+         </cfquery>
+         <cfif #load_wallet.recordCount# EQ 0>
+            <cfset result = false>
+         <cfelse>
+            <!--- Verify if the hash matches --->
+            <cfset salt = #load_wallet.wallet_salt#>
+            <cfset hashedPassword = Hash(#arguments.passdw# & #salt#, "SHA-512") />
+
+            <cfif #load_wallet.wallet_hash# EQ #hashedPassword#>
+              <cfset result = true>
+            <cfelse>
+              <cfset result = false>
+            </cfif>
+         </cfif>
+
+      <cfelse>
+         <cfset result = false>
+      </cfif>
+
+      <cfreturn result>
+   </cffunction>
+
 
 </cfcomponent>
 

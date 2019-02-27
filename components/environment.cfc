@@ -21,7 +21,12 @@
            status            BOOLEAN,
            mode              VARCHAR(20),
            hash_salt         VARCHAR(150),
-           base_dir          VARCHAR(200) NOT NULL
+           base_dir          VARCHAR(200) NOT NULL,
+           wallet_hash       VARCHAR(150),
+           wallet_salt       VARCHAR(150),
+           phrase            VARCHAR(150),
+           app_phrase        VARCHAR(150),
+           funds_origin      VARCHAR(20)
 	);
         ALTER TABLE settings ADD PRIMARY KEY (baker_id);
       </cfquery>	
