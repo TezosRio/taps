@@ -27,7 +27,7 @@
    <cfset isImporting = false>
 </cfif>
 <cfif isDefined('form.passphrase')>
-   <cfset passphrase = #form.passphrase#>
+   <cfset passphrase = #trim(form.passphrase)#>
 <cfelse>
    <cfset passphrase = "">
 </cfif>
@@ -37,12 +37,12 @@
    <cfset save = false>
 </cfif>
 <cfif isDefined('form.passdw')>
-   <cfset passdw = #form.passdw#>
+   <cfset passdw = #trim(form.passdw)#>
 <cfelse>
    <cfset passdw = "">
 </cfif>
 <cfif isDefined('form.mnemonic')>
-   <cfset mnemonicWords = #form.mnemonic#>
+   <cfset mnemonicWords = #trim(form.mnemonic)#>
 <cfelse>
    <cfset mnemonicWords = "">
 </cfif>
@@ -185,6 +185,11 @@
               }
 
               if (document.getElementById('idMnemonic').value == '')
+              {
+                 return 'idMnemonic_req';
+              }
+
+              if (document.getElementById('idMnemonic').value.match(/\S+/g).length < 15)
               {
                  return 'idMnemonic_req';
               }
@@ -392,11 +397,35 @@
 		                <td>
 		                   <label>
 		                      <button type="button" id="idImport" class="botao-taps"  onClick="javascript: var result = validateImport(); if (result == true){ hideReqFields(); document.getElementById('idImporting').value=true; document.form.submit(); } else { showRequiredField(result); }">IMPORT WALLET</button>
-			           </label>                   
+			           </label>
+                                   &nbsp;&nbsp; Total word count: &nbsp; <span id="display_count">0</span> words.                   
 		                </td>
 		             </tr> 
 
 		          </table>
+
+
+			<script>
+
+			$(document).ready(function() {
+			  $("##idMnemonic").on('keyup', function() {
+			    var words = this.value.match(/\S+/g).length;
+
+			    if (words > 15)
+			    {
+			      var trimmed = $(this).val().split(/\s+/, 15).join(" ");
+			      $(this).val(trimmed + " ");
+			    }
+			    else
+			    {
+			      $('##display_count').text(words);
+			      $('##word_left').text(15-words);
+			    }
+			  });
+			});
+
+			</script>
+
 
                        <cfelseif #settings.funds_origin# EQ "node">
                           <br><br><br>
@@ -464,7 +493,6 @@
       </cfoutput>
    </div>
 </section>
-
 
 <!-- Controller -->
 <cfoutput>
