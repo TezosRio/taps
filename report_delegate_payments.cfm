@@ -1,7 +1,11 @@
 <cfcontent type="application/pdf">
 <cfset subTotalSum = 0>
 <cfset totalSum = 0>
+<cfset myCycle = "">
 
+<cfif isDefined("url.myCycle")>
+   <cfset myCycle = "#url.myCycle#">
+</cfif>
 
 <!--- Get delegators payments from local database ---> 
 <cfinvoke component="components.database" method="getDelegatorsPayments" returnVariable="delegatorsPayments">
@@ -10,6 +14,9 @@
 <cfquery name="delegators_cycle_ordered" dbtype="query">
    select BAKER_ID, CYCLE, ADDRESS, DATE, RESULT, TOTAL
    from delegatorsPayments
+   <cfif #len(myCycle)# GT 0>
+   where CYCLE = #myCycle#
+   </cfif>
    order by CYCLE, BAKER_ID, TOTAL DESC, ADDRESS, DATE, RESULT 
 </cfquery>
 
@@ -48,7 +55,7 @@
    <cfdocumentsection>
       <center>
       <table>
-      <cfoutput query="#delegators_cycle_ordered#" group="CYCLE"> 
+      <cfoutput query="#delegators_cycle_ordered#" group="cycle"> 
             <tr>
                <th colspan="4" align="center" style="height:10px;font-size:9pt;font-family:Courier;">Cycle #delegators_cycle_ordered.cycle#</th>
                <td></td>

@@ -45,6 +45,12 @@
                <!--- Get delegators payments from local database ---> 
                <cfinvoke component="components.database" method="getDelegatorsPayments" returnVariable="delegatorsPayments">
 
+               <!--- Get last paid cycle --->
+               <cfquery name="cycles_paid" dbtype="query">
+                  select max(cycle) as last_paid_cycle
+                  from delegatorsPayments
+               </cfquery>
+ 
                <cfif #delegatorsPayments.recordCount# GT 0>
                   <cfform name="form" action="payments.cfm" method="post">
                      <table class="table table-taps-rewards">
@@ -82,8 +88,8 @@
                            <td></td>
                            <td></td>
                            <td></td>
-                           <td>Reports:</td>
-                           <td><img scr="./imgs/pdf.jpg" onclick="javascript:window.open('report.cfm');"></td>
+                           <td align="center" valign="middle"><image src="imgs/pdf.jpg" style="cursor:pointer;" width="45" valign="middle" onclick="javascript:window.open('report_delegate_payments.cfm?myCycle=#cycles_paid.last_paid_cycle#');"><br><span style="font-size:small;">Last paid</span></td>
+                           <td align="center" valign="middle"><image src="imgs/pdf.jpg" style="cursor:pointer;" width="45" valign="middle" onclick="javascript:window.open('report_delegate_payments.cfm');"><br><span style="font-size:small;">All cycles</span></td>
                         </tr>
 		        <cfinput name="address" type="hidden" value="">
 		        <cfinput name="fee" type="hidden" value="">
