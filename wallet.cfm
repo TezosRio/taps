@@ -109,6 +109,9 @@
       </cfif>
       <cfset saveResult = session.myWallet.save('#strPath#/wallet/wallet.taps')>
 
+      <!--- Register the wallet hashed passphrase in the local database --->
+      <cfinvoke component="components.database" method="saveWallet" bakerId="#application.bakerId#" passphrase="#passphrase#" passdw="#passdw#" returnVariable="resultSaveWallet">
+
    <cfelse>
       <cfset wrongLogin = "true">
    </cfif>
