@@ -13,8 +13,10 @@
    <!--- Constants --->
    <cfset rewardsDelivered="rewards_delivered">
    <cfset rewardsPending="rewards_pending">
+   <cfset twentyFourHours = 86400> <!--- In seconds --->
    <cfset tenMinutes = 600> <!--- In seconds --->
    <cfset fiftySeconds = 50>
+   <cfset twoMinutes = 120000> <!--- In miliseconds --->
 
    <!--- Methods ---> 
 
@@ -44,7 +46,7 @@
       <cfset var passphrase = "">
 
       <!--- Override Lucee Administrator settings for request timeout --->
-      <cfsetting requestTimeout = #tenMinutes#>
+      <cfsetting requestTimeout = #twentyFourHours#>
 
       <!--- First, update the payment date and the status in the local database --->
       <cfquery name="update_local" datasource="ds_taps">   
@@ -203,6 +205,9 @@
 
                          <!--- Send funds from native wallet, using TezosJ_SDK_plainJava library --->
                          <cfset result = myWallet.send("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "", "")>
+
+                         <!--- Wait for operation to finish safely --->
+                         <cfsleep time = "#twoMinutes#">
 
                          <!--- Check for errors --->
                          <cfset errCheck = findNoCase("error", "#result#")>
