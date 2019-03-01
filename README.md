@@ -52,6 +52,7 @@ Many features are not fully tested/implemented yet.
 
 ## Features
 
+- (NEW!) Native Wallet: Can be used as the funds resource to pay rewards to delegators.
 - Automatically distributes Tezos rewards to delegators when a cycle change happens.
 - User/Password protected access.
 - Custom individual delegator fee definition.
