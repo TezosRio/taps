@@ -10,6 +10,7 @@ To use this software you need to be a Tezos Baker with good experience. Follow t
 Two articles may be a good start:
 
 [Bakers on Holiday](https://medium.com/@lmilfont/bakers-on-holiday-6b15b300f0b1)
+
 [Installing Tezos TAPS](https://medium.com/@lmilfont/installing-tezos-taps-382adedd6a0f)
 
 
