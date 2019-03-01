@@ -9,8 +9,8 @@ It is written in CFML language (Coldfusion/Lucee). This repository contains all 
 To use this software you need to be a Tezos Baker with good experience. Follow the installation instructions below.
 Two articles may be a good start:
 
-[https://medium.com/@lmilfont/bakers-on-holiday-6b15b300f0b1](Bakers on holiday)
-[https://medium.com/@lmilfont/installing-tezos-taps-382adedd6a0f](Installing Tezos TAPS)
+[Bakers on Holiday](https://medium.com/@lmilfont/bakers-on-holiday-6b15b300f0b1)
+[Installing Tezos TAPS](https://medium.com/@lmilfont/installing-tezos-taps-382adedd6a0f)
 
 
 ## TAPS Installation
