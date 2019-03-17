@@ -265,12 +265,20 @@
    <cffunction name="getDelegatorFee" returnType="number">
       <cfargument name="address" required="true" type="string" />
 
+      <cfset var fee = "">
+
       <cfquery name="get_local_delegator_fee" datasource="ds_taps">
          SELECT fee FROM delegatorsFee
          WHERE address = <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">
       </cfquery>
 
-      <cfreturn #get_local_delegator_fee.fee#>
+      <cfif #get_local_delegator_fee.recordcount# GT 0>
+         <cfset fee = "#get_local_delegator_fee.fee#">
+      <cfelse>
+         <cfset fee = "#application.fee#">
+      </cfif>
+
+      <cfreturn fee >
    </cffunction>
 
    <!--- Save delegator fee to the local database --->
