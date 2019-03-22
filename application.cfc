@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.0.1">
+       <cfset application.version = "1.0.2">
        <cfset application.militez = 1000000>
        <cfset application.port = 8888>
        <cfset application.mode_no = "0">
@@ -70,8 +70,8 @@
 
        <!--- Application variables you may edit --->
        <cfset application.encSeed = "?73205!"> <!--- Used to hash sensible information along the code --->
-       <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
-       <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
+       <cfset application.proxyServer="proxy.rio.rj.gov.br">      <!--- Proxy Server if you are behind a proxy/firewall  --->
+       <cfset application.proxyPort="8080">      <!--- Proxy port if you are behind a proxy/firewall    --->
 
        <!--- Create needed database tables --->
        <cfinvoke component="components.environment" method="createTables">
