@@ -70,8 +70,8 @@
 
        <!--- Application variables you may edit --->
        <cfset application.encSeed = "?73205!"> <!--- Used to hash sensible information along the code --->
-       <cfset application.proxyServer="proxy.rio.rj.gov.br">      <!--- Proxy Server if you are behind a proxy/firewall  --->
-       <cfset application.proxyPort="8080">      <!--- Proxy port if you are behind a proxy/firewall    --->
+       <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
+       <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
 
        <!--- Create needed database tables --->
        <cfinvoke component="components.environment" method="createTables">
