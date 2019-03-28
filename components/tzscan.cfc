@@ -278,6 +278,66 @@
       <cfset totalDelegators = #val(fetchedOperationsNumber.filecontent.replaceAll('[^0-9\.]+','')) #>
 
       <cfset delegatorsPerPage = 50>
+      <cfset myIndex = 1>
+
+      <cfloop from="0" to="#int(totalDelegators / delegatorsPerPage)#" index="page">
+         <!--- Get list of delegators from tzscan --->
+            <cfhttp method="GET"
+                    charset="utf-8"
+                    url="https://api3.tzscan.io/v3/delegated_contracts/#arguments.bakerID#?p=#page#&number=#delegatorsPerPage#"
+                    result="fetchedDelegators"
+                    cachedWithin="#oneHour#"
+                    proxyServer="#application.proxyServer#"  
+                    proxyport="#application.proxyPort#"
+                    timeout="#fourMinutes#">
+		      
+            <!---  Parse JSON --->
+            <cfset arrayDelegators = deserializeJson(#fetchedDelegators.filecontent#) >
+
+            <cfloop from="1" to="#ArrayLen(arrayDelegators)#" index="key">
+               <cfset QueryAddRow(queryDelegators, 1)> 
+               <cfset QuerySetCell(queryDelegators, "order_id", javacast("integer", "#myIndex#"))>
+               <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))>
+               <cfset QuerySetCell(queryDelegators, "address", javacast("string", "#arrayDelegators[key]#"))>
+               <cfset myIndex = myIndex + 1>
+            </cfloop>
+
+      </cfloop>
+
+      <!--- Restore default Lucee Administrator settings for request timeout --->
+      <cfsetting requestTimeout = #fiftySeconds#>
+
+      <cfreturn #queryDelegators#>
+   </cffunction>
+
+
+ <!--- Method to get all known delegators from a given baker, independent from the cycle or rewards --->
+   <cffunction name="getAlternative" returntype="query">
+      <cfargument name="bakerID" required="true" type="string" />
+
+      <cfset var delegators = "">
+      <cfset var queryDelegators = "">
+
+      <!--- Override Lucee Administrator settings for request timeout --->
+      <cfsetting requestTimeout = #fourMinutes#>
+
+      <!--- Create in-memory cached database-table --->
+      <cfset queryDelegators = queryNew("timestamp, baker_id, address", "varchar, varchar, varchar")>
+
+      <!--- Get the number of operations of type "delegation" ever made to baker's address --->
+      <cfhttp method="GET"
+	      charset="utf-8"
+              url="https://api6.tzscan.io/v3/number_operations/#arguments.bakerID#?type=Delegation"
+              result="fetchedOperationsNumber"
+              cachedWithin="#fourMinutes#"
+              proxyServer="#application.proxyServer#"  
+              proxyport="#application.proxyPort#"
+              timeout="#fourMinutes#">
+
+      <!--- Parse the received JSON  --->
+      <cfset totalDelegators = #val(fetchedOperationsNumber.filecontent.replaceAll('[^0-9\.]+','')) #>
+
+      <cfset delegatorsPerPage = 50>
 
       <cfloop from="0" to="#int(totalDelegators / delegatorsPerPage)#" index="page">
          <!--- Get list of delegators from tzscan --->
@@ -295,7 +355,7 @@
 
             <cfloop from="1" to="#totalDelegators#" index="key">
                <cfset QueryAddRow(queryDelegators, 1)> 
-               <cfset QuerySetCell(queryDelegators, "order_id", javacast("integer", "#key#"))>
+               <cfset QuerySetCell(queryDelegators, "timestamp", javacast("string", "#arrayDelegators[key].type.operations[1].timestamp#"))>
                <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))>
                <cfset QuerySetCell(queryDelegators, "address", javacast("string", "#arrayDelegators[key].type.source.tz#"))>
             </cfloop>
@@ -306,8 +366,7 @@
       <cfsetting requestTimeout = #fiftySeconds#>
 
       <cfreturn #queryDelegators#>
-   </cffunction>
-
+</cffunction>
 
 
 </cfcomponent>

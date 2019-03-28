@@ -234,30 +234,48 @@
    <!--- Return a list of delegators' fee from the local database --->
    <cffunction name="getDelegatorsFees" returnType="query">
 
+      <!--- Create in-memory cached database-table --->
+      <cfset var queryFees = queryNew("timestamp,baker_id,address,fee","varchar,varchar,varchar,varchar")>
+
       <!--- Get the pending rewards cycle that is registered in current local database --->
       <cfset localPendingRewardsCycle=getLocalPendingRewardsCycle()>
 
-      <!--- First, get delegators query to do a join --->
-      <!--- This Join is required to order the delegators fee list by their balance --->
-      <cfinvoke component="components.tzscan" method="getDelegators" bakerID="#application.bakerId#"
-                fromCycle="#localPendingRewardsCycle#" toCycle="#localPendingRewardsCycle#" returnVariable="delegators">
+      <!--- First, get delegators query --->
+      <cfinvoke component="components.tzscan" method="getAlternative" bakerID="#application.bakerId#" returnVariable="delegators">
 
-      <!--- Second, get data from local delegatorsFee --->
-      <cfquery name="get_local_delegators_fees" datasource="ds_taps">
-         SELECT baker_id, address, fee
-         FROM delegatorsFee
-      </cfquery>
+      <cfloop query="delegators">
 
-      <!--- Now, do the join, so we can have the list ordered by the delegators' balance, from the highest to the lowest --->
+         <!--- Second, get data from local delegatorsFee --->
+         <cfquery name="get_local_delegators_fees" datasource="ds_taps">
+            SELECT baker_id, address, fee
+            FROM delegatorsFee
+            WHERE baker_id = '#delegators.baker_id#'
+            AND   address = '#delegators.address#'
+         </cfquery>
+
+         <cfset QueryAddRow(queryFees, 1)>
+         <cfset QuerySetCell(queryFees, "timestamp", javacast("string", "#delegators.timestamp#"))>
+         <cfset QuerySetCell(queryFees, "baker_id", javacast("string", "#delegators.baker_id#"))> 
+         <cfset QuerySetCell(queryFees, "address", javacast("string", "#delegators.address#"))> 
+         
+         <cfif #get_local_delegators_fees.recordcount# GT 0>
+            <cfset QuerySetCell(queryFees, "fee", javacast("string", "#get_local_delegators_fees.fee#"))> 
+         <cfelse>
+            <cfset QuerySetCell(queryFees, "fee", javacast("string", ""))>
+         </cfif>
+         
+      </cfloop>
+   
+      <!--- Order by the delegators' balance, from the highest to the lowest --->
       <cfquery name="delegators_fee_ordered" dbtype="query" cachedWithin="#oneMinute#">
          SELECT df.baker_id, df.address, df.fee
-         FROM get_local_delegators_fees df, delegators d
-         WHERE d.cycle = #localPendingRewardsCycle#
-         AND   df.baker_id = d.baker_id
+         FROM queryFees df, delegators d
+         WHERE df.baker_id = d.baker_id
          AND   df.address = d.address
-         ORDER BY d.balance DESC
+         -- AND   d.address <> df.baker_id
+         ORDER BY d.timestamp
       </cfquery>
-
+   
       <cfreturn #delegators_fee_ordered#>
    </cffunction>
 
@@ -290,16 +308,47 @@
       <cfset var result = false>
 
       <cftry>
-         <!--- Clear caches, as we are updating information --->
-         <cfobjectcache action = "clear" />
-
-         <cfquery name="local_save_delegators_fee" datasource="ds_taps">
-            UPDATE delegatorsFee
-            SET fee = <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_NUMERIC" maxlength="50">
+      
+         <!--- Check if delegator exists --->
+         <cfquery name="checkDelegator" datasource="ds_taps">
+            SELECT fee
+            FROM delegatorsFee
             WHERE baker_id = <cfqueryparam value="#arguments.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
             AND   address = <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">
          </cfquery>
-         <cfset result = true>
+
+         <cfif #checkDelegator.recordCount# GT 0>
+      
+            <!--- Clear caches, as we are updating information --->
+            <cfobjectcache action = "clear" />
+
+            <cfquery name="local_save_delegators_fee" datasource="ds_taps">
+               UPDATE delegatorsFee
+               SET fee = <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_DECIMAL" maxlength="6">
+               WHERE baker_id = <cfqueryparam value="#arguments.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+               AND   address = <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+            </cfquery>
+            <cfset result = true>
+
+         <cfelse>   
+
+            <!--- Clear caches --->
+            <cfobjectcache action = "clear" />
+
+            <cfquery name="local_insert_delegators_fee" datasource="ds_taps">
+               INSERT INTO delegatorsFee (baker_id, address, fee)
+               VALUES
+               (
+                  <cfqueryparam value="#arguments.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+                  <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+                  <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_DECIMAL" maxlength="6">
+               )
+            </cfquery>
+            <cfset result = true>
+         
+         </cfif>  
+            
+            
       <cfcatch>
          <cfset result = false>
       </cfcatch>
