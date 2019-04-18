@@ -134,7 +134,7 @@
 
                <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, pay rewards without considering fee --->
                <cfif #local_get_fee.recordCount# GT 0>
-                  <cfset paymentValue = #int(arguments.delegators.rewards * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
+                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
                <cfelse>
                   <cfset paymentValue = #arguments.delegators.rewards#>
                </cfif>
