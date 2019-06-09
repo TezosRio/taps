@@ -361,7 +361,7 @@
                   publish = "no"
                   startDate = "01/01/1970"
                   startTime = "00:00 AM"
-                  url="http://127.0.0.1/taps/script_fetch.cfm"
+                  url="http://127.0.0.1:#application.port#/taps/script_fetch.cfm"
                   operation="HTTPRequest" />
 
             <!--- After creating the scheduled task, we run it for the first time, to populate local database --->

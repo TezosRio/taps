@@ -9,6 +9,14 @@
                This script also detects and distributes rewards once they are delivered by the network.
 --->
 
+<cfset oneHour = #createTimeSpan(0,1,0,0)#>
+<cfset fourMinutes = 240> <!--- In seconds --->
+<cfset fiftySeconds = 50>
+
+
+<!--- Override Lucee Administrator settings for request timeout --->
+<cfsetting requestTimeout = #fourMinutes#>
+
 <!--- Get user configuration from local database and also update application (global) settings variables --->
 <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
@@ -76,4 +84,7 @@
 <br>
 Done!<br>
 <br>
+
+<!--- Restore default Lucee Administrator settings for request timeout --->
+<cfsetting requestTimeout = #fiftySeconds#>
 

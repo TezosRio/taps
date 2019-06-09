@@ -50,6 +50,7 @@
 
 		       <cfset reload = false>
 
+
 		       <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
 		       <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 

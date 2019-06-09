@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.0.2">
+       <cfset application.version = "1.0.21">
        <cfset application.militez = 1000000>
        <cfset application.port = 8888>
        <cfset application.mode_no = "0">

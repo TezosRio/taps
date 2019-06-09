@@ -77,18 +77,13 @@
       <cfargument name="bakerID" required="true" type="string" />
 
       <cfset var rewards = "">
+      <cfset var fetchedRewards = "">
 
-      <!--- Get list of baker rewards from tzscan --->
-      <cfhttp method="GET" charset="utf-8"
-              url="https://api6.tzscan.io/v3/rewards_split_cycles/#arguments.bakerID#"
-              result="fetchedRewards"
-              cachedWithin="#oneHour#"
-              proxyServer="#application.proxyServer#"  
-              proxyport="#application.proxyPort#"
-              timeout="#fourMinutes#">
-      
+      <!--- v1.0.21 --->
+      <cfinvoke component="components.tzscan" method="doHttpRequest" url="https://api6.tzscan.io/v3/rewards_split_cycles/#arguments.bakerID#" returnVariable="fetchedRewards">
+
       <!---  Parse JSON --->
-      <cfset rewards = #deserializeJson(fetchedRewards.filecontent)# >
+      <cfset rewards = #deserializeJson(fetchedRewards)# >
 
       <!--- Create in-memory cached database-table --->
       <cfset queryRewards = queryNew("baker_id,cycle,status","varchar,integer,varchar")>
@@ -113,9 +108,6 @@
 
       <cfset var delegators = "">
 
-      <!--- Override Lucee Administrator settings for request timeout --->
-      <cfsetting requestTimeout = #fourMinutes#>
-
       <!--- Create in-memory cached database-table --->
       <cfset queryDelegators = queryNew("baker_id,cycle,delegate_staking_balance,address,balance,share,rewards",
                                 "varchar,integer,numeric,varchar,numeric,numeric,numeric")>
@@ -134,17 +126,14 @@
 
                  <cfloop from="0" to="#int(totalDelegators / delegatorsPerPage)#" index="page">
 			 <!--- Get list of delegators from tzscan --->
-			 <cfhttp method="GET"
-				 charset="utf-8"
-				 url="https://api6.tzscan.io/v3/rewards_split/#arguments.bakerID#?p=#page#&number=#delegatorsPerPage#&cycle=#rewardsInfo.cycle#"
-				 result="fetchedDelegators"
-				 cachedWithin="#oneHour#"
-				 proxyServer="#application.proxyServer#"  
-				 proxyport="#application.proxyPort#"
-				 timeout="#fourMinutes#">
+
+                         <!--- v1.0.21 --->
+                         <cfinvoke component="components.tzscan" method="doHttpRequest"
+                           url="https://api6.tzscan.io/v3/rewards_split/#arguments.bakerID#?p=#page#&number=#delegatorsPerPage#&cycle=#rewardsInfo.cycle#"
+                           returnVariable="fetchedDelegators">
 		      
 			 <!---  Parse JSON --->
-			 <cfset delegators = deserializeJson(#fetchedDelegators.filecontent#) >
+			 <cfset delegators = deserializeJson(#fetchedDelegators#) >
 		         <cfset stakingBalance=#delegators.delegate_staking_balance#>
 			 <cfset arrayDelegators=#delegators.delegators_balance#>
 			 <cfset qtdDelegators=#ArrayLen(arrayDelegators)#>
@@ -189,9 +178,6 @@
             </cfif>
       </cfloop>
 
-      <!--- Restore default Lucee Administrator settings for request timeout --->
-      <cfsetting requestTimeout = #fiftySeconds#>
-
       <cfreturn #queryDelegators#>
    </cffunction>
 
@@ -205,13 +191,14 @@
       <cfset var numberOfDelegators = 0>
 
       <!--- Gets the information from TZSCAN.IO API --->
-      <cfhttp url="https://api6.tzscan.io/v3/nb_delegators/#arguments.bakerID#?cycle=#arguments.cycle#" method="get"  result="resultDelegators" charset="utf-8"
-              cachedWithin="#oneHour#"
-              proxyServer="#application.proxyServer#"  
-              proxyport="#application.proxyPort#" /> 
+
+      <!--- v1.0.21 --->
+      <cfinvoke component="components.tzscan" method="doHttpRequest"
+        url="https://api6.tzscan.io/v3/nb_delegators/#arguments.bakerID#?cycle=#arguments.cycle#"
+        returnVariable="resultDelegators">
 
       <!--- Parse the received JSON  --->
-      <cfset numberOfDelegators = #val(resultDelegators.filecontent.replaceAll('[^0-9\.]+','')) #>
+      <cfset numberOfDelegators = #val(resultDelegators.replaceAll('[^0-9\.]+','')) #>
 
       <cfreturn numberOfDelegators>
    </cffunction>
@@ -248,6 +235,55 @@
      </cfquery>
 
       <cfreturn check_network_delivered_cycle.networkDeliveredRewardsCycle>
+   </cffunction>
+
+
+   <!--- v1.0.21 --->
+
+   <!--- Do http request using alternative ways, to prevent failure --->
+   <cffunction name="doHttpRequest" returnType="string">
+      <cfset var responseText="">
+
+      <cfargument name="url" required="true" type="string" />
+
+      <cftry>
+         <!--- Do request with Linux curl command --->
+         <cfexecute variable="responseText"
+                    errorvariable="error"
+                    timeout="#fourMinutes#"
+                    name="curl #arguments.url#">
+         </cfexecute>
+
+      <cfcatch>
+
+         <cftry>
+            <!--- Do request with Linux wget command --->
+            <cfexecute variable="responseText"
+                       errorvariable="error"
+                       timeout="#fourMinutes#"
+                       name="wget -qO- #arguments.url#">
+            </cfexecute>
+
+         <cfcatch>
+         
+            <!--- Do request with Lucee cfhttp --->
+            <cfhttp method="GET" charset="utf-8"
+                 url="#arguments.url#"
+                 result="result"
+                 cachedWithin="#oneHour#"
+                 proxyServer="#application.proxyServer#"  
+                 proxyport="#application.proxyPort#"
+                 timeout="#fourMinutes#" />
+
+             <cfset responseText = "#result.filecontent#">
+
+         </cfcatch>
+         </cftry>
+
+      </cfcatch>
+      </cftry>
+
+      <cfreturn responseText>
    </cffunction>
 
 
