@@ -17,6 +17,7 @@
    <cfset tenMinutes = 600> <!--- In seconds --->
    <cfset fiftySeconds = 50>
    <cfset twoMinutes = 120000> <!--- In miliseconds --->
+   <cfset threeMinutes = 180000> <!--- In miliseconds --->
 
    <!--- Methods ---> 
 
@@ -24,8 +25,6 @@
    <!--- Some information is stored in the local database in the process, so it is possible to check them later --->
    <!--- Log files with the results from executing tezos-client transfers are also written, in the folder taps/logs --->
    <!--- When operating in Simulation mode, everything will be recorded, but payments will not be made for real --->
-   <!--- Payments are made only if rewards are greater then or equal 0.10 xtz --->
-   <!--- Transfer fee is set to 0.05 xtz --->
    <cffunction name="distributeRewards">
       <cfargument name="localPendingRewardsCycle" required="true" type="number" />
       <cfargument name="networkPendingRewardsCycle" required="true" type="number" />
@@ -207,7 +206,7 @@
                          <cfset result = myWallet.send("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "", "")>
 
                          <!--- Wait for operation to finish safely --->
-                         <cfsleep time = "#twoMinutes#">
+                         <cfsleep time = "#threeMinutes#">
 
                          <!--- Check for errors --->
                          <cfset errCheck = findNoCase("error", "#result#")>

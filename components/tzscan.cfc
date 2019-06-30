@@ -160,8 +160,7 @@
 				    <cfset delegator_reward = (totalRewards * share) / 100>
 
                                     <!--- Consider only if share higher than 0 xtz --->
-                                    <!--- Consider only if reward higher than or equal 0.10 xtz --->
-                                    <cfif #share# GTE 0.01 and #delegator_reward# GTE 0.10>
+                                    <cfif #share# GTE 0.01>
 
 					    <cfset QueryAddRow(queryDelegators, 1)> 
 					    <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))> 

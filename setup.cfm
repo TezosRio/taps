@@ -145,7 +145,7 @@
                         <br>
                         Take a tour through the menu options and when you feel secure, change STATUS to "On".<br>
                         <br> 
-                        TAPS works by querying TzScan.io API from time to time (60 minutes is recommended).
+                        TAPS works by querying TzScan.io API from time to time (10 minutes is recommended).
                         Then it extracts information about Rewards status for the configured baker ID
                         and its delegators. All data is stored in a local database, and can then be checked
                         through the menu options.<br>
@@ -539,9 +539,9 @@
 	    <label>
 	       <span class="text-input-taps">Update frequency (minutes)</span><input type="text" class="required" id="idFreq_req" value="&nbsp;Required" readonly>
 	       <cfif #len(freq)# GT 0 and #isTesting# NEQ "1">
-	          <cfinput type="text" id="idFreq" name="freq" class="input-taps" size="50" placeholder="(recommended 60)" value="#freq#" readonly>
+	          <cfinput type="text" id="idFreq" name="freq" class="input-taps" size="50" placeholder="(recommended 10)" value="#freq#" readonly>
 	       <cfelse>
-	          <cfinput type="text" id="idFreq" name="freq" class="input-taps" size="50" placeholder="(recommended 60)" value="#freq#">
+	          <cfinput type="text" id="idFreq" name="freq" class="input-taps" size="50" placeholder="(recommended 10)" value="#freq#">
 	       </cfif>
 	    </label>
 	 </td>
