@@ -213,6 +213,8 @@
       <cfquery name="rewards_info" dbtype="query">
          SELECT MIN(cycle) as networkPendingRewardsCycle FROM arguments.rewards
          WHERE LOWER(STATUS) = <cfqueryparam value="rewards_pending" sqltype="CF_SQL_VARCHAR" maxlength="30">
+         <!--- v1.0.23 --->
+         OR LOWER(STATUS) = <cfqueryparam value="cycle_pending" sqltype="CF_SQL_VARCHAR" maxlength="30">
       </cfquery>
 
       <!--- Parse the received JSON  --->
