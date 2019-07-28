@@ -74,6 +74,7 @@
                	           <table class="table table-taps-alt">
                              <thead class="head-table-taps">
                                 <tr>
+                                   <th style="text-align:center;" scope="col"></th>
                                    <th style="text-align:center;" scope="col">Delegator</th>
                                    <th style="text-align:center;" scope="col">Balance</th>
                                    <th style="text-align:center;" scope="col">Share</th>
@@ -87,6 +88,7 @@
 
                               <cfloop from="1" to="#delegators.recordCount#" index="i"> 
                                  <tr>
+                                    <td align="center">#i#</td>
                		            <td align="left">#delegators.address[i]#</td>
                		            <td align="center">#LSNumberFormat((delegators.balance[i]) / application.militez, '999,999,999,999.00')#&nbsp;#application.tz#</td>
                        		    <td align="center">#numberFormat(delegators.share[i], '999.99')#%</td>
@@ -106,6 +108,7 @@
 
                               <tr>
                                  <td align="left" >Total</td>
+                                 <td align="left"></td>
                                  <td align="center" >#LSNumberFormat(totalSum, '999,999,999,999.99')#&nbsp;#application.tz#</td>
                                  <td align="center" ></td>
                	 	         <td align="center" >#LSNumberFormat(totalRewards, '999,999,999,999.99')#&nbsp;#application.tz#</td>

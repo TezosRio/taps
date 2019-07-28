@@ -78,6 +78,7 @@
                   <table class="table table-taps-fees">
                      <thead class="head-table-taps">
                      <tr>
+                        <th style="text-align:center;" scope="col"></th>
                         <th style="text-align:center;" scope="col">Delegator</th>
                         <th style="text-align:center;" scope="col">Fee</th>
                         <th style="text-align:center;" scope="col"></th>
@@ -88,6 +89,7 @@
                      <tbody>
                         <cfloop from="1" to="#fees.recordCount#" index="i"> 
                            <tr>
+                              <td align="center">#i#</td>
                               <td align="left">
                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                  #fees.address[i]#

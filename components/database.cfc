@@ -165,13 +165,9 @@
    <cffunction name="storeDefaultDelegatorsFee">
       <cfargument name="delegators" required="true" type="query" />
 
-      <!--- Check if table is empty (if it is first time use) --->
-      <cfquery name="local_delegators_fee" datasource="ds_taps">
-         SELECT count(*) as total FROM delegatorsFee
-      </cfquery>
-      <cfif #local_delegators_fee.total# EQ 0>
+      <!--- v1.0.24 - Removed condition test if table was empty ---> 
+
          <!--- Loop through delegators and save the configured fee % for everyone --->
-      
          <cfloop query="#arguments.delegators#">
             <cftry>
             <cfquery name="local_save_delegators_fee" datasource="ds_taps">
@@ -187,7 +183,7 @@
             </cfcatch>
             </cftry>
          </cfloop>
-      </cfif>
+
    </cffunction>
 
    <!--- Get the pending rewards cycle that is registered in current local database --->
@@ -240,7 +236,14 @@
       <!--- First, get delegators query to do a join --->
       <!--- This Join is required to order the delegators fee list by their balance --->
       <cfinvoke component="components.tzscan" method="getDelegators" bakerID="#application.bakerId#"
-                fromCycle="#localPendingRewardsCycle#" toCycle="#localPendingRewardsCycle#" returnVariable="delegators">
+                fromCycle="#localPendingRewardsCycle#" toCycle="#localPendingRewardsCycle#" returnVariable="delegators">       
+
+
+      <!--- v1.0.24 --->   
+      <!--- This is an integrity measure. If for some reason the local database got corrupted, here
+            we rebuild the DelegatorsFee table ---> 
+      <cfinvoke component="components.database" method="storeDefaultDelegatorsFee" delegators="#delegators#">
+
 
       <!--- Second, get data from local delegatorsFee --->
       <cfquery name="get_local_delegators_fees" datasource="ds_taps">
