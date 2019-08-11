@@ -551,6 +551,67 @@
       <cfreturn result>
    </cffunction>
 
+   <!--- v.1.0.3 --->
+
+   <!--- Return a list of bond pool members from the local database --->
+   <cffunction name="getBondPoolMembers" returnType="query">
+
+      <!--- Get data from local bondpool --->
+      <cfquery name="get_local_bondpoolers" datasource="ds_taps">
+         SELECT baker_id, address, amount, name
+         FROM bondPool
+         ORDER BY baker_id, amount, name
+      </cfquery>
+
+      <cfreturn #get_local_bondpoolers#>
+   </cffunction>
+
+   <!--- Add/delete/update bondpool member --->
+   <cffunction name="bondPoolMemberProxy" access="remote" returntype="string">
+      <cfargument name="address" required="true" type="string" />
+      <cfargument name="amount" required="true" type="string" />
+      <cfargument name="name" required="true" type="string" />
+      <cfargument name="operation" required="true" type="string" />
+
+      <cfset var f_amount = #Replace(arguments.amount, ',', '', 'all')#>  
+
+      <cftry>
+
+      <cfif #operation# EQ "add">
+         <cfquery name="add_bondpool_member" datasource="ds_taps">
+            INSERT INTO bondPool (BAKER_ID, ADDRESS, AMOUNT, NAME)
+            VALUES
+            (
+               <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+               <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+               <cfqueryparam value="#f_amount#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
+               <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+            )
+         </cfquery>
+
+      <cfelseif #operation# EQ "update">
+         <cfquery name="update_bondpool_member" datasource="ds_taps">
+            UPDATE bondPool
+            SET amount = <cfqueryparam value="#f_amount#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
+                name = <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+            WHERE baker_id = <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+            AND address =  <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+         </cfquery>
+
+      <cfelseif #operation# EQ "delete">
+         <cfquery name="delete_bondpool_member" datasource="ds_taps">
+            DELETE FROM bondPool
+            WHERE baker_id = <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+            AND address =  <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">;
+         </cfquery>
+      </cfif>
+   
+      <cfcatch>
+      </cfcatch>
+      </cftry>
+
+   </cffunction>
+
 
 </cfcomponent>
 

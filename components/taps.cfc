@@ -131,11 +131,11 @@
                   AND   ADDRESS  = <cfqueryparam value="#delegators.address#" sqltype="CF_SQL_VARCHAR" maxlength="50"> 
                </cfquery>
 
-               <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, pay rewards without considering fee --->
+               <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, pay rewards with default fee --->
                <cfif #local_get_fee.recordCount# GT 0>
                   <cfset paymentValue = #(arguments.delegators.rewards * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
                <cfelse>
-                  <cfset paymentValue = #arguments.delegators.rewards#>
+                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - application.fee) / 100) * 100) / 100#>
                </cfif>
 
                <!--- Time to check what will be the origin of the funds: Native wallet or node funds --->
@@ -553,6 +553,9 @@
 
             </cfif>
          </cfif>
+
+         <!--- Check if table bondPool exists. If it doesn't, create it --->
+         <cfinvoke component="components.database" method="checkTableBondPool" returnVariable="checkResult">
 
       <cfcatch>
       </cfcatch>

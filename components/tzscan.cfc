@@ -119,7 +119,6 @@
 
          <!--- Gets only information for the specified cycle range --->
          <cfif ( len(#arguments.fromCycle#) EQ 0 and len(#arguments.toCycle#) EQ 0 ) or (#rewardsInfo.cycle# LTE #arguments.toCycle# and #rewardsInfo.cycle# GTE #arguments.fromCycle#)>
-
                  <!--- Get the number of delegators in the cycle --->
                  <cfset totalDelegators = getNumberOfDelegatorInCycle("#arguments.bakerID#", #rewardsInfo.cycle#)>
                  <cfset delegatorsPerPage = 50>
@@ -133,24 +132,95 @@
                            returnVariable="fetchedDelegators">
 		      
 			 <!---  Parse JSON --->
-			 <cfset delegators = deserializeJson(#fetchedDelegators#) >
-		         <cfset stakingBalance=#delegators.delegate_staking_balance#>
+			 <cfset delegators = deserializeJson(#fetchedDelegators#)>
+                         <cfset stakingBalance=#delegators.delegate_staking_balance#>
 			 <cfset arrayDelegators=#delegators.delegators_balance#>
 			 <cfset qtdDelegators=#ArrayLen(arrayDelegators)#>
-			 <cfset totalStakingBalance = #delegators.delegate_staking_balance# / militez>
+			 <cfset totalStakingBalance = #delegators.delegate_staking_balance# / militez>                         
 
-		         <cfset blocksRewards = #delegators.blocks_rewards# / militez>
-		         <cfset endorsementsRewards = #delegators.endorsements_rewards# / militez>
-		         <cfset fees = #delegators.fees# / militez>
-		         <cfset futureBlocksRewards = #delegators.future_blocks_rewards# / militez>
-		         <cfset futureEndorsementsRewards = #delegators.future_endorsements_rewards# / militez>
-		         <cfset gainFromDenounciation = #delegators.gain_from_denounciation# / militez>	
-		         <cfset revelationRewards = #delegators.revelation_rewards# / militez>
-		         <cfset lostDepositsFromDenounciation =  #delegators.lost_deposit_from_denounciation# / militez>	
-		         <cfset lostRewardsDenounciation = #delegators.lost_rewards_denounciation# / militez>	
-		         <cfset lostFeesDenounciation = #delegators.lost_fees_denounciation# / militez>	
-		         <cfset lostRevelationRewards =  #delegators.lost_revelation_rewards# / militez>	
-		         <cfset lostRevelationFees = #delegators.lost_revelation_fees# / militez>
+                         <cftry>
+		            <cfset blocksRewards = #delegators.blocks_rewards# / militez>
+                         <cfcatch>
+   		            <cfset blocksRewards = 0>   
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset endorsementsRewards = #delegators.endorsements_rewards# / militez>
+                         <cfcatch>
+		            <cfset endorsementsRewards = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset fees = #delegators.fees# / militez>
+                         <cfcatch>
+		            <cfset fees = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset futureBlocksRewards = #delegators.future_blocks_rewards# / militez>
+                         <cfcatch>
+		            <cfset futureBlocksRewards = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset futureEndorsementsRewards = #delegators.future_endorsements_rewards# / militez>
+                         <cfcatch>
+		            <cfset futureEndorsementsRewards = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset gainFromDenounciation = #delegators.gain_from_denounciation# / militez>	
+                         <cfcatch>
+  		            <cfset gainFromDenounciation = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset revelationRewards = #delegators.revelation_rewards# / militez>
+                         <cfcatch>
+		            <cfset revelationRewards = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset lostDepositsFromDenounciation =  #delegators.lost_deposit_from_denounciation# / militez>	
+                         <cfcatch>
+		            <cfset lostDepositsFromDenounciation =  0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset lostRewardsDenounciation = #delegators.lost_rewards_denounciation# / militez>	
+                         <cfcatch>
+		            <cfset lostRewardsDenounciation = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset lostFeesDenounciation = #delegators.lost_fees_denounciation# / militez>	
+                         <cfcatch>
+		            <cfset lostFeesDenounciation = 0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset lostRevelationRewards =  #delegators.lost_revelation_rewards# / militez>	
+                         <cfcatch>
+		            <cfset lostRevelationRewards =  0>
+                         </cfcatch>
+                         </cftry>
+
+                         <cftry>
+		            <cfset lostRevelationFees = #delegators.lost_revelation_fees# / militez>
+                         <cfcatch>
+		            <cfset lostRevelationFees = 0>
+                         </cfcatch>
+                         </cftry>
 
 	   <cfset totalRewards = (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) >
 
@@ -158,9 +228,6 @@
                             <cfif #arrayDelegators[key].balance# GT 0>
 	 		            <cfset share = #((arrayDelegators[key].balance / totalStakingBalance) / militez) * 100#> 
 				    <cfset delegator_reward = (totalRewards * share) / 100>
-
-                                    <!--- Consider only if share higher than 0 xtz --->
-                                    <cfif #share# GTE 0.01>
 
 					    <cfset QueryAddRow(queryDelegators, 1)> 
 					    <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))> 
@@ -170,7 +237,6 @@
 					    <cfset QuerySetCell(queryDelegators, "balance", javacast("string", "#arrayDelegators[key].balance#"))> 
 					    <cfset QuerySetCell(queryDelegators, "share", javacast("string", "#share#"))> 
 					    <cfset QuerySetCell(queryDelegators, "rewards", javacast("string", "#LSCurrencyFormat(delegator_reward,"none","en_US")#"))> 
-                               </cfif>		
                             </cfif>		
 			 </cfloop>
               </cfloop>

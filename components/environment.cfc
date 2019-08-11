@@ -88,6 +88,23 @@
    </cfcatch>
    </cftry>
 
+   <cftry>
+      <!--- Create table to control bondpool>
+      <cfquery name="createTableBondPool" datasource="ds_taps">
+      	   --CREATE TABLE bondPool
+	  -- (
+         --     baker_id VARCHAR(50)  NOT NULL,
+         --     address  VARCHAR(50)  NOT NULL,
+         --     amount   DECIMAL(20,2) NOT NULL,
+         --     name     VARCHAR(50)
+	 --  );
+         --  ALTER TABLE bondPool ADD PRIMARY KEY (baker_id, address);
+      </cfquery --->	
+   <cfcatch type="any">
+      <cfset result = false>
+   </cfcatch>
+   </cftry>
+
    <cfreturn result>		
 </cffunction>
 
