@@ -353,5 +353,113 @@
       <cfreturn responseText>
    </cffunction>
 
+   <!--- v1.0.3 --->
 
+   <!--- Get total baker rewards in a cycle --->
+   <cffunction name="getBakersRewardsInCycle" returnType="string">
+      <cfset var totalRewards = 0>
+
+      <cfargument name="bakerId" required="true" type="string" />
+      <cfargument name="cycle" required="true" type="string" />
+
+      <cftry>
+	<cfinvoke component="components.tzscan" method="doHttpRequest"
+	url="https://api6.tzscan.io/v3/rewards_split/#arguments.bakerId#?p=0&number=0&cycle=#arguments.cycle#"
+	returnVariable="rewardsInfo">
+
+	<cfset rewardsDetails = deserializeJson(rewardsInfo)>
+
+	 <cftry>
+	    <cfset blocksRewards = #rewardsDetails.blocks_rewards# / militez>
+	 <cfcatch>
+	    <cfset blocksRewards = 0>   
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset endorsementsRewards = #rewardsDetails.endorsements_rewards# / militez>
+	 <cfcatch>
+	    <cfset endorsementsRewards = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset fees = #rewardsDetails.fees# / militez>
+	 <cfcatch>
+	    <cfset fees = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset futureBlocksRewards = #rewardsDetails.future_blocks_rewards# / militez>
+	 <cfcatch>
+	    <cfset futureBlocksRewards = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset futureEndorsementsRewards = #rewardsDetails.future_endorsements_rewards# / militez>
+	 <cfcatch>
+	    <cfset futureEndorsementsRewards = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset gainFromDenounciation = #rewardsDetails.gain_from_denounciation# / militez>	
+	 <cfcatch>
+	    <cfset gainFromDenounciation = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset revelationRewards = #rewardsDetails.revelation_rewards# / militez>
+	 <cfcatch>
+	    <cfset revelationRewards = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset lostDepositsFromDenounciation =  #rewardsDetails.lost_deposit_from_denounciation# / militez>	
+	 <cfcatch>
+	    <cfset lostDepositsFromDenounciation =  0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset lostRewardsDenounciation = #rewardsDetails.lost_rewards_denounciation# / militez>	
+	 <cfcatch>
+	    <cfset lostRewardsDenounciation = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset lostFeesDenounciation = #rewardsDetails.lost_fees_denounciation# / militez>	
+	 <cfcatch>
+	    <cfset lostFeesDenounciation = 0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset lostRevelationRewards =  #rewardsDetails.lost_revelation_rewards# / militez>	
+	 <cfcatch>
+	    <cfset lostRevelationRewards =  0>
+	 </cfcatch>
+	 </cftry>
+
+	 <cftry>
+	    <cfset lostRevelationFees = #rewardsDetails.lost_revelation_fees# / militez>
+	 <cfcatch>
+	    <cfset lostRevelationFees = 0>
+	 </cfcatch>
+	 </cftry>
+
+	<cfset totalRewards = (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) >
+
+      <cfcatch>
+      </cfcatch>
+      </cftry>
+
+      <cfreturn totalRewards>
+   </cffunction>
+   
 </cfcomponent>

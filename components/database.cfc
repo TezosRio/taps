@@ -553,47 +553,99 @@
 
    <!--- v.1.0.3 --->
 
+   <!--- Return bond pool total stake from the local database --->
+   <cffunction name="getTotalBondPoolStake" returnType="string">
+
+      <!--- Get data from local bondpool --->
+      <cfquery name="get_total_stake" datasource="ds_taps">
+         SELECT SUM(AMOUNT) TOTAL
+         FROM bondPool
+         WHERE BAKER_ID = '#application.bakerId#'
+      </cfquery>
+
+      <cfreturn #get_total_stake.total#>
+   </cffunction>
+
+
    <!--- Return a list of bond pool members from the local database --->
    <cffunction name="getBondPoolMembers" returnType="query">
+      <cfargument name="sortForPayment" required="false" type="boolean">
 
       <!--- Get data from local bondpool --->
       <cfquery name="get_local_bondpoolers" datasource="ds_taps">
-         SELECT baker_id, address, amount, name
+         SELECT BAKER_ID, ADDRESS, AMOUNT, NAME, ADM_CHARGE, IS_MANAGER
          FROM bondPool
-         ORDER BY baker_id, amount, name
+         WHERE BAKER_ID = '#application.bakerId#'
+         <cfif #arguments.sortForPayment# EQ true>
+            ORDER BY baker_id, IS_MANAGER, amount, name
+         <cfelse>
+            ORDER BY baker_id, name
+         </cfif>
       </cfquery>
 
       <cfreturn #get_local_bondpoolers#>
    </cffunction>
 
+
+
    <!--- Add/delete/update bondpool member --->
-   <cffunction name="bondPoolMemberProxy" access="remote" returntype="string">
+   <cffunction name="bondPoolMemberProxy" returntype="boolean">
       <cfargument name="address" required="true" type="string" />
-      <cfargument name="amount" required="true" type="string" />
-      <cfargument name="name" required="true" type="string" />
+      <cfargument name="amount" required="false" type="string" />
+      <cfargument name="name" required="false" type="string" />
+      <cfargument name="fee" required="false" type="string" />
+      <cfargument name="ismanager" required="false" type="string" />
       <cfargument name="operation" required="true" type="string" />
 
       <cfset var f_amount = #Replace(arguments.amount, ',', '', 'all')#>  
+      <cfset var manager = "">
+      <cfset var result=false>
+
+      <cfif #findnocase("on", arguments.ismanager)# GT 0 OR
+            #findnocase("yes", arguments.ismanager)# GT 0 OR
+            #findnocase("true", arguments.ismanager)# GT 0>
+         <cfset manager = true>
+      <cfelse>
+         <cfset manager = false>
+      </cfif>
 
       <cftry>
 
+         <cfset result=true>
+
+         <cfif #manager#>
+            <!--- Clear isManager field for all entries --->
+            <cfquery name="clear_isManager" datasource="ds_taps">
+               UPDATE bondPool
+               SET is_manager = false
+              WHERE baker_id = <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+           </cfquery>
+         </cfif>
+
       <cfif #operation# EQ "add">
+
+
          <cfquery name="add_bondpool_member" datasource="ds_taps">
-            INSERT INTO bondPool (BAKER_ID, ADDRESS, AMOUNT, NAME)
+            INSERT INTO bondPool (BAKER_ID, ADDRESS, AMOUNT, NAME, ADM_CHARGE, IS_MANAGER)
             VALUES
             (
                <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
                <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
                <cfqueryparam value="#f_amount#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
-               <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+               <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+               <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
+               <cfqueryparam value="#manager#" sqltype="CF_SQL_BOOLEAN" maxlength="5">
             )
          </cfquery>
 
       <cfelseif #operation# EQ "update">
+
          <cfquery name="update_bondpool_member" datasource="ds_taps">
             UPDATE bondPool
             SET amount = <cfqueryparam value="#f_amount#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
-                name = <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+                name = <cfqueryparam value="#arguments.name#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+                adm_charge = <cfqueryparam value="#arguments.fee#" sqltype="CF_SQL_NUMERIC" maxlength="20">,
+                is_manager = <cfqueryparam value="#manager#" sqltype="CF_SQL_BOOLEAN" maxlength="5">
             WHERE baker_id = <cfqueryparam value="#application.bakerid#" sqltype="CF_SQL_VARCHAR" maxlength="50">
             AND address =  <cfqueryparam value="#arguments.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">
          </cfquery>
@@ -607,10 +659,112 @@
       </cfif>
    
       <cfcatch>
+         <cfset result=false>
       </cfcatch>
       </cftry>
 
+      <cfreturn result>
    </cffunction>
+
+   <!--- Make sure that bondPool tables exists --->
+   <cffunction name="checkBondPoolTables " returntype="string">
+      <cfset var result = true>
+
+	   <cftry>
+	      <!--- Create table to control bondpool settings --->
+	      <cfquery name="createTableBondPoolSettings" datasource="ds_taps">
+	      	   CREATE TABLE bondPoolSettings
+		   (
+		      baker_id    VARCHAR(50)  NOT NULL,
+		      status      BOOLEAN      NOT NULL
+		   );
+		   ALTER TABLE bondPoolSettings ADD PRIMARY KEY (baker_id);
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+
+	   <cftry>
+	      <!--- Create table to control bondpool --->
+	      <cfquery name="createTableBondPool" datasource="ds_taps">
+	      	   CREATE TABLE bondPool
+		   (
+		      baker_id    VARCHAR(50)  NOT NULL,
+		      address     VARCHAR(50)  NOT NULL,
+		      amount      DECIMAL(20,2) NOT NULL,
+		      name        VARCHAR(50),
+		      adm_charge  DECIMAL(20,2) NOT NULL,
+		      is_manager  BOOLEAN
+		   );
+		   ALTER TABLE bondPool ADD PRIMARY KEY (baker_id, address);
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+      <cfreturn result>
+   </cffunction>
+
+   <!--- Return bond pool total stake from the local database --->
+   <cffunction name="getBondPoolSettings" returnType="query">
+      <cfset var q = "">
+
+      <!--- Get data from local bondpool --->
+      <cfquery name="get_bondPool_settings" datasource="ds_taps">
+         SELECT BAKER_ID, STATUS
+         FROM bondPoolSettings
+         WHERE BAKER_ID = '#application.bakerId#'
+      </cfquery>
+
+      <cfif #get_bondPool_settings.recordcount# EQ 0>
+         <cfset q = queryNew("baker_id,status","varchar,varchar")>
+         <cfset QueryAddRow(q, 1)> 
+         <cfset QuerySetCell(q, "baker_id", javacast("string", "#application.bakerID#"))>
+         <cfset QuerySetCell(q, "status", javacast("boolean", "false"))>
+         <cfset get_bondPool_settings = q>
+      </cfif>
+
+      <cfreturn #get_bondPool_settings#>
+   </cffunction>
+
+   <!--- Return bond pool total stake from the local database --->
+   <cffunction name="saveBondPoolSettings" returnType="boolean">
+      <cfset var result = false>
+
+      <cfargument name="status" required="true" type="boolean">
+
+      <cfquery name="check_empty_table" datasource="ds_taps">
+         SELECT BAKER_ID, STATUS
+         FROM bondPoolSettings
+         WHERE BAKER_ID = '#application.bakerId#'
+      </cfquery>
+
+      <cfif #check_empty_table.recordcount# EQ 0>
+	 <cfquery name="save_settings" datasource="ds_taps">
+	    INSERT INTO bondPoolSettings
+	    (BAKER_ID, STATUS)
+	    VALUES
+	    (
+	       <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+	       <cfqueryparam value="#arguments.status#" sqltype="CF_SQL_BOOLEAN" maxlength="10">
+	     )
+	 </cfquery>
+	 <cfset result = true>
+         
+      <cfelse>
+	 <cfquery name="save_settings" datasource="ds_taps">
+	    UPDATE bondPoolSettings
+	    SET STATUS = <cfqueryparam value="#arguments.status#" sqltype="CF_SQL_BOOLEAN" maxlength="10">
+	    WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+	 </cfquery>
+	 <cfset result = true>
+
+      </cfif>
+
+      <cfreturn result>
+   </cffunction>
+
 
 
 </cfcomponent>

@@ -115,6 +115,9 @@
             </cfif>
      </cfif>   
 
+     <!--- Initialize TezosJ_SDK Transaction Batch --->
+     <cfset result = myWallet.clearTransactionBatch()>
+
       <!--- Make rewards payment to delegators --->  
       <!--- Loop through delegators and do transfers (or simulate them, depending on mode) --->
       <cfloop query="#arguments.delegators#">
@@ -202,17 +205,10 @@
                      <!--- If operation mode is ON, then make real transfers --->
                      <cfif #operationMode# EQ "#application.mode_desc_yes#">
 
-                         <!--- Send funds from native wallet, using TezosJ_SDK_plainJava library --->
-                         <cfset result = myWallet.send("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "", "")>
-
-                         <!--- Wait for operation to finish safely --->
-                         <cfsleep time = "#threeMinutes#">
-
-                         <!--- Check for errors --->
-                         <cfset errCheck = findNoCase("error", "#result#")>
-                         <cfif #errCheck# GT 0>
-                            <cfthrow message="Could not send from native wallet" detail="#result#">
-                         </cfif>
+                         <cfset result="">
+  
+		         <!--- Add payment transaction information to transaction batch --->
+		         <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
 
                      <cfelse>
                         <cfset result = "Simulated send #paymentValue# xtz from #from# to #arguments.delegators.address#"> 
@@ -268,6 +264,12 @@
          </cfif>
       </cfloop>
 
+      <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
+      <cfif #operationMode# EQ "#application.mode_desc_yes#">
+         <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
+	 <cfset result = myWallet.flushTransactionBatch()>
+      </cfif>
+
       <!--- Then, update the payments result and total, in the local database --->
       <cfquery name="update_local" datasource="ds_taps">   
           UPDATE payments SET
@@ -277,6 +279,112 @@
           AND CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
           AND DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy')
        </cfquery>
+
+
+
+       <!--- v1.0.3 BONDPOOLERS PAYMENT --->
+
+       <!--- Check if configuration is set to do bondpoolers payment --->
+       <cfinvoke component="components.database" method="getBondPoolSettings" returnVariable="bondPoolSettings">
+
+       <cfif #bondPoolSettings.status# EQ true>
+          
+          <!--- Check if there is any bondpool member configured in local database --->
+          <cfinvoke component="components.database" method="getBondPoolMembers" sortForPayment="true" returnVariable="members">
+    
+          <cfif #members.recordCount# GT 0>
+
+	       <cfset var totalCycleRewards = 0>
+	       <cfset var totalDelegatorRewardsPaid = 0>
+	       <cfset var poolRewardsTotal = 0>
+	       <cfset var totalBond = 0>
+	       <cfset var bond = 0>
+	       <cfset var members = "">
+	       <cfset var memberShare = 0>
+	       <cfset var memberRewardsBeforeFee = 0>
+	       <cfset var admFee = 0>
+	       <cfset var memberRewardsPayment = 0>
+	       <cfset var totalAdmFees = 0>
+	       <cfset var poolAdministrator = 0>
+
+	       <!--- Get total cycle rewards --->
+	       <cfinvoke component="components.tzscan"
+		         method="getBakersRewardsInCycle"
+		         bakerId="#application.bakerId#" cycle="#arguments.localPendingRewardsCycle#"
+		         returnVariable="totalCycleRewards">
+
+	       <!--- Get total paid to delegators --->
+	       <cfset totalDelegatorRewardsPaid = #totalPaid#>
+
+
+	       <!--- Calculate Pool Rewards to distribute --->
+	       <cfset poolRewardsTotal = #val(totalCycleRewards) - totalDelegatorRewardsPaid#>
+
+	       <!--- Get total bond pool stake --->
+	       <cfinvoke component="components.database" method="getTotalBondPoolStake" returnVariable="totalBond">       
+	       <cfset bond = #val(totalBond)#>
+
+	       <!--- Get list of bond pool members from local database --->
+	       <cfinvoke component="components.database" method="getBondPoolMembers" sortForPayment="true" returnVariable="members">
+
+	       <!--- Initialize TezosJ_SDK Transaction Batch --->
+	       <cfset result = myWallet.clearTransactionBatch()>
+
+	       <!--- Loop through list of bondpoolers from local database, ordered by total and isManager --->
+	       <cfloop query="members">
+
+		    <!--- Get member share --->
+		    <cfset memberShare = #(members.amount / bond) * 100#>
+
+		    <!--- Calculate member individual rewards according to its share (% over pool rewards) --->
+		    <cfset memberRewardsBeforeFee = #(poolRewardsTotal * memberShare)/100#>
+
+		    <!--- Calculate administrative fee --->
+		    <cfset admFee = #memberRewardsBeforeFee * (members.adm_charge/100)#>
+
+		    <!--- Subtract from the individual rewards the administrative fee --->
+		    <cfset memberRewardsPayment =  #memberRewardsBeforeFee - admFee#>
+
+		    <!--- Sum total administrative fee --->
+		    <cfset totalAdmFees =  #totalAdmFees + admFee#>
+
+		    <!--- Add payment transaction information to transaction batch --->
+		    <cfset result = myWallet.addTransactionToBatch("#from#", "#members.address#", #JavaCast("BigDecimal", memberRewardsPayment)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+
+		    <!--- Identifies pool administrator --->
+		    <cfif #members.is_manager# EQ true>
+		       <cfset poolAdministrator = "#members.address#">
+
+		       <!--- This is a guarantee that there can be only one pool manager --->
+		       <cfbreak>
+		    </cfif>
+
+	       </cfloop>
+	       
+	       <!--- Add a transaction to pay administrative fees to the manager --->
+	       <cfset result = myWallet.addTransactionToBatch("#from#", "#poolAdministrator#", #JavaCast("BigDecimal", totalAdmFees)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+
+	       <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
+	       <cfif #operationMode# EQ "#application.mode_desc_yes#">
+		  <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
+		  <cfset result = myWallet.flushTransactionBatch()>
+	       <cfelse>
+		  <cfset transactions = myWallet.getTransactionList()>
+                  <cfset strPath = ExpandPath( "./" ) />
+                  <cfif Not DirectoryExists("#strPath#/logs")>
+                     <cfdirectory action = "create" directory="#strPath#/logs" />
+                  </cfif>
+
+		  <cffile file="../logs/bondPool_transactions.log" action="write" output="">
+		  <cfloop array="#transactions#" index="i">
+		     <cffile file="../logs/bondPool_transactions.log" action="append" output="#i.getFrom()#, #i.getTo()#, #i.getAmount()#, #i.getFee()# ">
+		  </cfloop>
+	       </cfif>
+          </cfif>
+       </cfif>
+       <!--- v1.0.3 BONDPOOLERS PAYMENT --->
+
+
 
       <cfif #fundsOrigin# EQ "native">
          <!--- "Close" the native wallet --->
@@ -417,6 +525,8 @@
 				    DELETE FROM payments;
 				    DELETE FROM delegatorsPayments;
 				    DELETE FROM delegatorsFee;
+                                    DELETE FROM bondPool;
+                                    DELETE FROM bondPoolSettings;
 				 </cfquery>
 
 				 <!--- Delete all memory caches --->
@@ -555,7 +665,7 @@
          </cfif>
 
          <!--- Check if table bondPool exists. If it doesn't, create it --->
-         <cfinvoke component="components.database" method="checkTableBondPool" returnVariable="checkResult">
+         <cfinvoke component="components.database" method="checkBondPoolTables" returnVariable="checkResult">
 
       <cfcatch>
       </cfcatch>

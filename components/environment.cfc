@@ -89,17 +89,34 @@
    </cftry>
 
    <cftry>
-      <!--- Create table to control bondpool>
+      <!--- Create table to control bondpool settings --->
+      <cfquery name="createTableBondPoolSettings" datasource="ds_taps">
+      	   CREATE TABLE bondPoolSettings
+	   (
+              baker_id    VARCHAR(50)  NOT NULL,
+              status      BOOLEAN      NOT NULL
+	   );
+           ALTER TABLE bondPoolSettings ADD PRIMARY KEY (baker_id);
+      </cfquery>
+   <cfcatch type="any">
+      <cfset result = false>
+   </cfcatch>
+   </cftry>
+
+   <cftry>
+      <!--- Create table to control bondpool --->
       <cfquery name="createTableBondPool" datasource="ds_taps">
-      	   --CREATE TABLE bondPool
-	  -- (
-         --     baker_id VARCHAR(50)  NOT NULL,
-         --     address  VARCHAR(50)  NOT NULL,
-         --     amount   DECIMAL(20,2) NOT NULL,
-         --     name     VARCHAR(50)
-	 --  );
-         --  ALTER TABLE bondPool ADD PRIMARY KEY (baker_id, address);
-      </cfquery --->	
+      	   CREATE TABLE bondPool
+	   (
+              baker_id    VARCHAR(50)  NOT NULL,
+              address     VARCHAR(50)  NOT NULL,
+              amount      DECIMAL(20,2) NOT NULL,
+              name        VARCHAR(50),
+              adm_charge  DECIMAL(20,2) NOT NULL,
+              is_manager  BOOLEAN
+	   );
+           ALTER TABLE bondPool ADD PRIMARY KEY (baker_id, address);
+      </cfquery>
    <cfcatch type="any">
       <cfset result = false>
    </cfcatch>
