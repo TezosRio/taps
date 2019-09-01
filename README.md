@@ -34,14 +34,15 @@ Two articles may be a good start:
    - Copy the downloaded file /home/[user]/downloads/org.h2-1.3.172.lex to folder /opt/lucee/tomcat/lucee-server/deploy/
    - Wait a minute. Lucee detects the extension and installs it automatically. That's it!
 
-5) Clone TAPS from GitHub with:
-
-   git clone https://github.com/TezosRio/taps.git
+5) On Command Line Interface, go to folder (CD): /opt/lucee/tomcat/webapps (Debian) or /opt/lucee/tomcat/webapps/ROOT (UBUNTU).
 
 6) Install TAPS.
-   - Copy TAPS folder to /opt/lucee/tomcat/webapps/
+
+   - Clone TAPS from GitHub with: git clone https://github.com/TezosRio/taps.git
    - Start TAPS in your browser with http://127.0.0.1:8888/taps/index.cfm
    - Log in TAPS with default user/pass: admin/admin.
+   
+   Note: On UBUNTU TAPS folder must be in /opt/lucee/tomcat/webapps/ROOT/
    
 7) Usage.
    - Go to TAPS SETUP page and enter your Baker's details. TAPS starts in simulation mode,
@@ -58,12 +59,14 @@ Many features are not fully tested/implemented yet.
 
 ## Features
 
-- (NEW!) Native Wallet: Can be used as the funds resource to pay rewards to delegators.
+- Native Wallet: Can be used as the funds resource to pay rewards to delegators.
 - Automatically distributes Tezos rewards to delegators when a cycle change happens.
 - User/Password protected access.
 - Custom individual delegator fee definition.
 - Generates payment logs.
 - Stores payments history.
+- (NEW!) Batch Transaction Payments!
+- (NEW!) Bond Pool configuration and automatic payments!
 
 ## Credits
 
