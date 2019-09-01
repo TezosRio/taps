@@ -268,6 +268,17 @@
       <cfif #operationMode# EQ "#application.mode_desc_yes#">
          <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
 	 <cfset result = myWallet.flushTransactionBatch()>
+
+         <!--- Wait for operation to finish safely --->
+         <cfsleep time = "#threeMinutes#">
+
+         <!--- Log the operation result --->
+         <cfset strPath = ExpandPath( "./" ) />
+         <cfif Not DirectoryExists("#strPath#/logs")>
+            <cfdirectory action = "create" directory="#strPath#/logs" />
+         </cfif>
+	 <cffile file="../logs/batch_result.log" action="write" output="#result#">
+
       </cfif>
 
       <!--- Then, update the payments result and total, in the local database --->
@@ -368,6 +379,10 @@
 	       <cfif #operationMode# EQ "#application.mode_desc_yes#">
 		  <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
 		  <cfset result = myWallet.flushTransactionBatch()>
+
+   	          <!--- Wait for operation to finish safely --->
+	          <cfsleep time = "#threeMinutes#">
+
 	       <cfelse>
 		  <cfset transactions = myWallet.getTransactionList()>
                   <cfset strPath = ExpandPath( "./" ) />
@@ -380,6 +395,7 @@
 		     <cffile file="../logs/bondPool_transactions.log" action="append" output="#i.getFrom()#, #i.getTo()#, #i.getAmount()#, #i.getFee()# ">
 		  </cfloop>
 	       </cfif>
+
           </cfif>
        </cfif>
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->

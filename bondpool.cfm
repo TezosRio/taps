@@ -396,7 +396,7 @@
                            <th style="text-align:left;" scope="col">Fee (%)</th>
                            <th style="text-align:left;" scope="col">Name</th>
                            <th style="text-align:center;" scope="col">Is Manager?</th>
-                           <th style="text-align:center;" scope="col">Share (%)</th>
+                           <th style="text-align:center;" scope="col"></th>
                            <th style="text-align:center;" scope="col"></th>
                            <th style="text-align:center;" scope="col"></th>
                            <th style="text-align:center;" scope="col"></th>
