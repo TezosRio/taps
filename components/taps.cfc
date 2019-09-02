@@ -207,8 +207,10 @@
 
                          <cfset result="">
   
-		         <!--- Add payment transaction information to transaction batch --->
-		         <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
+                         <cfif #paymentValue# GT 0>
+		            <!--- Add payment transaction information to transaction batch --->
+		            <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
+                         </cfif>
 
                      <cfelse>
                         <cfset result = "Simulated send #paymentValue# xtz from #from# to #arguments.delegators.address#"> 
@@ -359,8 +361,10 @@
 		    <!--- Sum total administrative fee --->
 		    <cfset totalAdmFees =  #totalAdmFees + admFee#>
 
-		    <!--- Add payment transaction information to transaction batch --->
-		    <cfset result = myWallet.addTransactionToBatch("#from#", "#members.address#", #JavaCast("BigDecimal", memberRewardsPayment)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+                    <cfif #memberRewardsPayment# GT 0>
+		       <!--- Add payment transaction information to transaction batch --->
+		       <cfset result = myWallet.addTransactionToBatch("#from#", "#members.address#", #JavaCast("BigDecimal", memberRewardsPayment)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+                    </cfif>
 
 		    <!--- Identifies pool administrator --->
 		    <cfif #members.is_manager# EQ true>
@@ -372,8 +376,10 @@
 
 	       </cfloop>
 	       
-	       <!--- Add a transaction to pay administrative fees to the manager --->
-	       <cfset result = myWallet.addTransactionToBatch("#from#", "#poolAdministrator#", #JavaCast("BigDecimal", totalAdmFees)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+               <cfif #totalAdmFees# GT 0>
+	          <!--- Add a transaction to pay administrative fees to the manager --->
+	          <cfset result = myWallet.addTransactionToBatch("#from#", "#poolAdministrator#", #JavaCast("BigDecimal", totalAdmFees)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+               </cfif>
 
 	       <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
 	       <cfif #operationMode# EQ "#application.mode_desc_yes#">
