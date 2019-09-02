@@ -307,6 +307,9 @@
     
           <cfif #members.recordCount# GT 0>
 
+             <!--- Check if delegators got paid, otherwise abort (as it would distribute all rewards to bondpoolers) --->
+	     <cfif #totalPaid# GT 0>
+	     
 	       <cfset var totalCycleRewards = 0>
 	       <cfset var totalDelegatorRewardsPaid = 0>
 	       <cfset var poolRewardsTotal = 0>
@@ -402,6 +405,7 @@
 		  </cfloop>
 	       </cfif>
 
+             </cfif>
           </cfif>
        </cfif>
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->
