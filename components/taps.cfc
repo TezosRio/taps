@@ -43,6 +43,7 @@
       <cfset var from = "">
       <cfset var TezosJ = "">
       <cfset var passphrase = "">
+      <cfset var defaultFee = 0>
 
       <!--- Override Lucee Administrator settings for request timeout --->
       <cfsetting requestTimeout = #twentyFourHours#>
@@ -91,7 +92,8 @@
          <cfset clientPath = "#settings.client_path#">
          <cfset baseDir = "#settings.base_dir#">
          <cfset nodeAlias = "#settings.node_alias#">
-         <cfset fundsOrigin = "#settings.funds_origin#">          
+         <cfset fundsOrigin = "#settings.funds_origin#">
+         <cfset defaultFee = #settings.default_fee#>
       <cfelse>
          <cfset operationMode = "#application.mode_desc_try#">
       </cfif>
@@ -138,7 +140,7 @@
                <cfif #local_get_fee.recordCount# GT 0>
                   <cfset paymentValue = #(arguments.delegators.rewards * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
                <cfelse>
-                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - application.fee) / 100) * 100) / 100#>
+                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - defaultFee) / 100) * 100) / 100#>
                </cfif>
 
                <!--- Time to check what will be the origin of the funds: Native wallet or node funds --->
@@ -266,23 +268,25 @@
          </cfif>
       </cfloop>
 
-      <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
-      <cfif #operationMode# EQ "#application.mode_desc_yes#">
-         <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
-	 <cfset result = myWallet.flushTransactionBatch()>
+      <cfif #fundsOrigin# EQ "native">
+         <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
+         <cfif #operationMode# EQ "#application.mode_desc_yes#">
+            <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
+   	    <cfset result = myWallet.flushTransactionBatch()>
 
-         <!--- Wait for operation to finish safely --->
-         <cfsleep time = "#threeMinutes#">
+            <!--- Wait for operation to finish safely --->
+            <cfsleep time = "#threeMinutes#">
 
-         <!--- Log the operation result --->
-         <cfset strPath = ExpandPath( "./" ) />
-         <cfif Not DirectoryExists("#strPath#/logs")>
-            <cfdirectory action = "create" directory="#strPath#/logs" />
+           <!--- Log the operation result --->
+            <cfset strPath = ExpandPath( "./" ) />
+            <cfif Not DirectoryExists("#strPath#/logs")>
+               <cfdirectory action = "create" directory="#strPath#/logs" />
+            </cfif>
+	    <cffile file="../logs/batch_result.log" action="write" output="#result#">
+
          </cfif>
-	 <cffile file="../logs/batch_result.log" action="write" output="#result#">
-
       </cfif>
-
+      
       <!--- Then, update the payments result and total, in the local database --->
       <cfquery name="update_local" datasource="ds_taps">   
           UPDATE payments SET
@@ -296,6 +300,9 @@
 
 
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->
+
+       <!--- Bondpoolers payment is only available through the use of Native Wallet, so check it --->
+       <cfif #fundsOrigin# EQ "native">
 
        <!--- Check if configuration is set to do bondpoolers payment --->
        <cfinvoke component="components.database" method="getBondPoolSettings" returnVariable="bondPoolSettings">
@@ -407,7 +414,8 @@
 
              </cfif>
           </cfif>
-       </cfif>
+       </cfif> <!--- Bondpool Settings status is true? --->
+       </cfif> <!--- Funds origin is native wallet? --->
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->
 
 
