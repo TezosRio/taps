@@ -18,6 +18,8 @@
    <cfset fiftySeconds = 50>
    <cfset twoMinutes = 120000> <!--- In miliseconds --->
    <cfset threeMinutes = 180000> <!--- In miliseconds --->
+   <cfset tenMinutesMili = 600000> <!--- In miliseconds --->
+
 
    <!--- Methods ---> 
 
@@ -245,6 +247,8 @@
                   </cfoutput>
 
                <cfcatch>
+                  <cffile file="../logs/last_error.log" action="write" output="#cfcatch.message#">
+
                   <!--- If some error ocurred in Tezos-client transfer execution OR TezosJ_SDK transfer --->
                   <cfset errorArray[i] = "#arguments.delegators.address#">
                   <cfset i = i + 1>
@@ -275,7 +279,7 @@
    	    <cfset result = myWallet.flushTransactionBatch()>
 
             <!--- Wait for operation to finish safely --->
-            <cfsleep time = "#threeMinutes#">
+            <cfsleep time = "#tenMinutesMili#">
 
            <!--- Log the operation result --->
             <cfset strPath = ExpandPath( "./" ) />
@@ -397,7 +401,7 @@
 		  <cfset result = myWallet.flushTransactionBatch()>
 
    	          <!--- Wait for operation to finish safely --->
-	          <cfsleep time = "#threeMinutes#">
+	          <cfsleep time = "#tenMinutesMili#">
 
 	       <cfelse>
 		  <cfset transactions = myWallet.getTransactionList()>

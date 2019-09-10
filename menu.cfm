@@ -64,6 +64,9 @@
                     <a href="menu.cfm?opt=security" id="item-menu"  name="secutiry">SECURITY</a>
                 </li>
                 <li>
+                    <a href="menu.cfm?opt=advanced" id="item-menu"  name="fee">ADVANCED</a>
+                </li>
+                <li>
                     <a href="menu.cfm?opt=bondpool" id="item-menu"  name="secutiry">BOND POOL</a>
                 </li>
                 <li>
