@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.1.1">
+       <cfset application.version = "1.1.2">
        <cfset application.militez = 1000000>
        <cfset application.port = 8888>
        <cfset application.mode_no = "0">
@@ -58,8 +58,8 @@
        <cfset application.mode_desc_no = "off">
        <cfset application.mode_desc_try = "simulation">
        <cfset application.mode_desc_yes = "on">
-       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.0.3.jar">
-       <cfset application.tz_default_operation_fee = "0.00142">
+       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.0.9.jar">
+       <cfset application.tz_default_operation_fee = "0.00294">
 
        <!--- Some application variables initialization --->
        <!--- Do not change                             --->
