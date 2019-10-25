@@ -34,7 +34,7 @@
            Delegators Payments
          </h1>                
   
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>

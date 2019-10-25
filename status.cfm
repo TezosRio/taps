@@ -95,10 +95,10 @@
             </cfif>
 
             <div style="text-align: justify;text-justify: inter-word;">
-            TAPS starts in <span style="font-weight:bold;">Simulation</span> mode, which means it will fetch information from TzScan
+            TAPS starts in <span style="font-weight:bold;">Simulation</span> mode, which means it will fetch information from Tezos network
             in a frequent basis, but it will NOT make real rewards payments to delegators.
-            If mode is set to <span style="font-weight:bold;">Off</span>, it will not fetch TzScan at all.
-            When TAPS is set to <span style="font-weight:bold;">On</span>, it will fetch TzScan in a frequent basis an when it detects
+            If mode is set to <span style="font-weight:bold;">Off</span>, it will not fetch data at all.
+            When TAPS is set to <span style="font-weight:bold;">On</span>, it will fetch data in a frequent basis an when it detects
             a cycle change, it will make REAL rewards payments to delegators, according to their shares,
             based on information obtained from the Tezos blockchain.<br><br>
             </div>

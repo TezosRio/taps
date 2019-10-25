@@ -31,7 +31,6 @@
 
             var cycle = $("#idCycle").val();
 
-
             $(".repay").click(function(){
 
                if (confirm('Are you sure to repeat all rewards payments for cycle ' + cycle  + '?\nThis cannot be undone!'))
@@ -63,18 +62,18 @@
             Advanced
          </h1>                
 
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
             <cfif #settings.mode# NEQ "off">
 
                <cfif #settings.status# EQ true>
-                  <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
-                  <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
+                  <!--- Get baker's rewards and store them in memory cache ---> 
+                  <cfinvoke component="components.tezosGateway" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 
                   <!--- Get the current delivered reward cycle according to the network --->
-                  <cfinvoke component="components.tzscan" method="getLastRewardsDeliveryCycle" rewards="#rewards#" 
+                  <cfinvoke component="components.tezosGateway" method="getLastRewardsDeliveryCycle" rewards="#rewards#" 
                            returnVariable="lastRewardsDeliveryCycle">
 
 		       <cfset reload = false>

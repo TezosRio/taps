@@ -276,7 +276,7 @@
          <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
          <cfif #operationMode# EQ "#application.mode_desc_yes#">
             <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
-   	    <cfset result = myWallet.flushTransactionBatch()>
+   	    <cfset result = myWallet.flushTransactionBatch("15400", "300")>
 
             <!--- Wait for operation to finish safely --->
             <cfsleep time = "#tenMinutesMili#">
@@ -335,7 +335,7 @@
 	       <cfset var poolAdministrator = 0>
 
 	       <!--- Get total cycle rewards --->
-	       <cfinvoke component="components.tzscan"
+	       <cfinvoke component="components.tezosGateway"
 		         method="getBakersRewardsInCycle"
 		         bakerId="#application.bakerId#" cycle="#arguments.localPendingRewardsCycle#"
 		         returnVariable="totalCycleRewards">
@@ -477,7 +477,7 @@
       <cfreturn result>
    </cffunction>
 
-   <!--- Create Scheduled task to query TzScan from time to time --->
+   <!--- Create Scheduled task to query Tezos network from time to time --->
    <!--- This is the heart of TAPS. This is responsible to detect when a cycle changes --->
    <cffunction name="createScheduledTask" returnType="boolean">
       <cfargument name="port" required="true" type="number">
@@ -530,7 +530,7 @@
 
    <!--- This method do a factory-reset on the system --->
    <!--- It will clear all data previously stored in local database. But will not delete the logs in folder taps/logs --->
-   <!--- It will delete the scheduled task that fetches TzScan --->
+   <!--- It will delete the scheduled task that fetches Tezos network --->
    <cffunction name="resetTaps" returnType="boolean">
       <cfargument name="user" required="true" type="string" />
       <cfargument name="passdw" required="true" type="string" />
@@ -601,7 +601,7 @@
 
    <!--- Pause Scheduled task to stop TAPS (mode off) --->
    <!--- This will PAUSE the scheduled-task, which means that TAPS will neither simulate nor make real payments --->
-   <!--- It will just stop querying TzScan --->
+   <!--- It will just stop querying Tezos network --->
    <cffunction name="pauseScheduledTask" returnType="boolean">
       <cfargument name="port" required="true" type="number">
 
@@ -633,7 +633,7 @@
    </cffunction>
 
    <!--- Resume Scheduled task to run TAPS (mode simulation or on) --->
-   <!--- This will make TzScan fetches active again --->
+   <!--- This will make Tezos network fetches active again --->
    <cffunction name="resumeScheduledTask" returnType="boolean">
       <cfargument name="port" required="true" type="number">
 

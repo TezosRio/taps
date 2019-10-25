@@ -339,7 +339,7 @@
          <h1>Bond Pool</h1>
          <h4>Configure your bond pool</h4>
 
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <!--- Get settings --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 

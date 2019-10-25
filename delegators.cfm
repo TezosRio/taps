@@ -49,7 +49,7 @@
       <h1>Delegators</h1>
       <h4>(in rewards-pending cycle #localPendingRewardsCycle#)</h4>
 
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
@@ -58,15 +58,15 @@
 
                <cfset reload = false>
 
-               <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
-               <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
+               <!--- Get baker's rewards and store them in memory cache ---> 
+               <cfinvoke component="components.tezosGateway" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 
                <!--- Get the current network pending rewards cycle ---> 
-               <cfinvoke component="components.tzscan" method="getNetworkPendingRewardsCycle" returnVariable="networkPendingRewardsCycle" 
+               <cfinvoke component="components.tezosGateway" method="getNetworkPendingRewardsCycle" returnVariable="networkPendingRewardsCycle" 
                          rewards="#rewards#">
 
-               <!--- Get baker's delegators (and shares) for the last pending cycle (plus previous and next cycle) from TzScan and store them in memory cache --->
-               <cfinvoke component="components.tzscan" method="getDelegators" bakerID="#application.bakerId#"                     
+               <!--- Get baker's delegators (and shares) for the last pending cycle (plus previous and next cycle) and store them in memory cache --->
+               <cfinvoke component="components.tezosGateway" method="getDelegators" bakerID="#application.bakerId#"                     
                          fromCycle="#networkPendingRewardsCycle#" toCycle="#networkPendingRewardsCycle#" returnVariable="delegators">
 
                      <cfif #delegators.recordCount# GT 0>

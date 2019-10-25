@@ -40,7 +40,7 @@
             Rewards
          </h1>                
 
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
          <cfif #settings.recordCount# GT 0>
@@ -51,8 +51,8 @@
 		       <cfset reload = false>
 
 
-		       <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
-		       <cfinvoke component="components.tzscan" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
+		       <!--- Get baker's rewards and store them in memory cache ---> 
+		       <cfinvoke component="components.tezosGateway" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 
 		          <table class="table table-taps-rewards">
 		             <thead class="head-table-taps">

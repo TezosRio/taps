@@ -235,7 +235,7 @@
 
       <!--- First, get delegators query to do a join --->
       <!--- This Join is required to order the delegators fee list by their balance --->
-      <cfinvoke component="components.tzscan" method="getDelegators" bakerID="#application.bakerId#"
+      <cfinvoke component="components.tezosGateway" method="getDelegators" bakerID="#application.bakerId#"
                 fromCycle="#localPendingRewardsCycle#" toCycle="#localPendingRewardsCycle#" returnVariable="delegators">       
 
 

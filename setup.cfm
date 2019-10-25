@@ -131,7 +131,7 @@
 	         <div  style="width:650px;">
 	         <cfoutput>
 
-		    <!--- Create scheduled task to fetch tzscan from time to time --->
+		    <!--- Create scheduled task to fetch from time to time --->
 		    <cfinvoke component="components.taps" method="createScheduledTask" returnVariable="createTaskResult" port="#luceePort#">
 		 
 		    <cfif #createTaskResult# EQ true>
@@ -145,7 +145,7 @@
                         <br>
                         Take a tour through the menu options and when you feel secure, change STATUS to "On".<br>
                         <br> 
-                        TAPS works by querying TzScan.io API from time to time (10 minutes is recommended).
+                        TAPS works by querying RPC or APIs from time to time (10 minutes is recommended).
                         Then it extracts information about Rewards status for the configured baker ID
                         and its delegators. All data is stored in a local database, and can then be checked
                         through the menu options.<br>
@@ -162,7 +162,7 @@
 		       <cfinvoke component="components.database" method="removeSettings" bakerId="#baker#" returnVariable="resultRemove">
 
 		       There was an error while configuring TAPS.<br>
-		       Could not create scheduled task to fetch TzScan.
+		       Could not create scheduled task to fetch data.
 		    </cfif>
 	      
 	         </cfoutput>

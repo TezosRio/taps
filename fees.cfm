@@ -61,7 +61,7 @@
 
          <h1>Fees</h1>
 
-         <!--- Check if all data were fetched from TzScan --->
+         <!--- Check if all data were fetched --->
          <!--- Get settings --->
          <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
@@ -69,7 +69,7 @@
            <cfif #settings.mode# NEQ "off">
             <cfif #settings.status# EQ true>
 
-               <!--- Get baker's rewards from TzScan and store them in memory cache ---> 
+               <!--- Get baker's rewards and store them in memory cache ---> 
                <cfinvoke component="components.database" method="getDelegatorsFees" returnVariable="fees">
 
                <cfset reload = false>
