@@ -68,6 +68,10 @@
             <!--- Instantiate a new wallet from previously saved file --->
             <cfset strPath = ExpandPath( "./" ) />
             <cfset myWallet = tezosJ.init(true, "#strPath#wallet/wallet.taps", "#passphrase#")>
+            
+            <!--- Change RPC provider --->
+            <cfset myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>           
+            
             <cfset from = "#myWallet.getPublicKeyHash()#">
 
             <cfif #from# EQ #destination#>

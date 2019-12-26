@@ -64,6 +64,9 @@
 
       <!--- Instantiate a new wallet with the user passphrase --->
       <cfset myWallet = session.tezosJ.init("#passphrase#")>
+      
+      <!--- Change RPC provider --->
+      <cfset myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>           
 
       <!--- Give an alias to the wallet --->
       <cfset r = myWallet.setAlias("TAPS")>
@@ -101,6 +104,9 @@
 
       <!--- Instantiate a new wallet with the user passphrase and mnemonic words --->
       <cfset session.myWallet = session.tezosJ.init("#mnemonicWords#", "#passphrase#")>
+
+      <!--- Change RPC provider --->
+      <cfset session.myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>
 
       <!--- Saves the wallet in advance, so we don't have to pass sensitive information through html form submit --->
       <cfset strPath = ExpandPath( "./" ) />
