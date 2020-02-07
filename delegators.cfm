@@ -109,7 +109,7 @@
                               <tr>
                                  <td  style="font-size: 0.9em;" align="left" >Total</td>
                                  <td  style="font-size: 0.9em;" align="left"></td>
-                                 <td  style="font-size: 0.9em;" align="center" >#LSNumberFormat(totalSum, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
+                                 <td  style="font-size: 0.9em;" align="center" >#LSNumberFormat(totalSum / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                                  <td style="font-size: 0.9em;"  align="center" ></td>
                	 	         <td  style="font-size: 0.9em;" align="center" >#LSNumberFormat(totalRewards / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                                  <td  style="font-size: 0.9em;" align="center">#LSNumberFormat(((totalRewards/ application.militez) - (totalActual / application.militez)), '999,999,999,999.999999')#&nbsp;#application.tz#</td>
