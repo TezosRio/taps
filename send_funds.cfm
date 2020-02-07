@@ -70,7 +70,7 @@
             <cfset myWallet = tezosJ.init(true, "#strPath#wallet/wallet.taps", "#passphrase#")>
             
             <!--- Change RPC provider --->
-            <cfset myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>           
+            <cfset myWallet.setProvider("#application.provider#")>           
             
             <cfset from = "#myWallet.getPublicKeyHash()#">
 

@@ -55,7 +55,7 @@
 		       <cfset session.myWallet = session.tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
                        
                        <!--- Change RPC provider --->
-                       <cfset session.myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>		       
+                       <cfset session.myWallet.setProvider("#application.provider#")>		       
 		       
 		       <cfset session.totalAvailable = "#session.myWallet.getBalance()#">
 		    </cfif>

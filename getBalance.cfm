@@ -3,7 +3,7 @@
 <cfheader name="Access-Control-Allow-Headers" value="Origin, X-Requested-With, Content-Type, Accept">
 <cfheader name="Access-Control-Allow-Methods"  value="GET, POST, OPTIONS">
 <cfheader name="Access-Control-Allow-Credentials"  value="true">
-<cfset session.myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>
+<cfset session.myWallet.setProvider("#application.provider#")>
 <cfset balance = #session.myWallet.getBalance()#>
 <cfset myBalance = serializeJson(#replace(balance, chr(34), "", "all")#)>
 <cfcontent type="application/json; charset=utf-8">

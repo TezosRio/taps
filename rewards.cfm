@@ -54,7 +54,7 @@
 		       <!--- Get baker's rewards and store them in memory cache ---> 
 		       <cfinvoke component="components.tezosGateway" method="getRewards" bakerID="#application.bakerId#" returnVariable="rewards">
 
-		          <table class="table table-taps-rewards">
+		          <table class="table table-taps-rewards" style="width:80%;margin-left:80px;">
 		             <thead class="head-table-taps">
 		                <tr>
 		                   <th style="text-align:center;" scope="col">Cycle Number</th>
@@ -64,8 +64,8 @@
 
 		             <tbody>
 
-			       <cfloop from="#rewards.recordCount#" to="1" step="-1" index="i">  
-			         <tr>
+			       <cfloop from="1" to="#rewards.recordCount#" step="1" index="i">  
+			         <tr style="line-height:8px;">
 			            <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.cycle[i]#</td>
 			            <td align="center" style="background-color:<cfif #rewards.status[i]# EQ "rewards_delivered">##dff0d8<cfelseif #rewards.status[i]# EQ "rewards_pending"><cfif #rewards.cycle[i]# NEQ #localPendingRewardsCycle#>##fcf8e3<cfelse>##fcc3c3</cfif><cfelseif #rewards.status[i]# EQ "cycle_in_progress">##d9edf7<cfelseif #rewards.status[i]# EQ "cycle_pending">##f0f0f0</cfif>">#rewards.status[i]#</td>
 			        </tr>

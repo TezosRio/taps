@@ -88,32 +88,32 @@
 
                               <cfloop from="1" to="#delegators.recordCount#" index="i"> 
                                  <tr>
-                                    <td align="center">#i#</td>
-               		            <td align="left">#delegators.address[i]#</td>
-               		            <td align="center">#LSNumberFormat((delegators.balance[i]) / application.militez, '999,999,999,999.00')#&nbsp;#application.tz#</td>
-                       		    <td align="center">#numberFormat(delegators.share[i], '999.99')#%</td>
-                       		    <td align="center">#delegators.rewards[i]#&nbsp;#application.tz#</td>
+                                    <td style="font-size: 0.9em;" align="center">#i#</td>
+               		            <td style="font-size: 0.9em;" align="left">#delegators.address[i]#</td>
+               		            <td style="font-size: 0.9em;" align="center">#LSNumberFormat((delegators.balance[i]) / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
+                       		    <td style="font-size: 0.9em;" align="center">#numberFormat(delegators.share[i], '999.99')#%</td>
+                       		    <td style="font-size: 0.9em;" align="center">#LSNumberFormat(delegators.rewards[i] / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
 
                                     <!--- Get delegator fee and calculate actual rewards --->
                                     <cfinvoke component="components.database" method="getDelegatorFee" address="#delegators.address[i]#" returnVariable="fee">
 
-                                    <td align="center">#fee#%</td>
-                                    <cfset actual=#LSNumberFormat(int(delegators.rewards[i] * ((100 - fee) / 100) * 100) / 100, '999,999,999,999.99')#>
-                                    <td align="center">#actual#&nbsp;#application.tz#</td>
-                                    <cfset totalSum = totalSum + #(delegators.balance[i] / application.militez)#>
+                                    <td style="font-size: 0.9em;" align="center">#fee#%</td>
+                                    <cfset actual=#LSNumberFormat((delegators.rewards[i] / application.militez) * ((100 - fee) / 100) * 100 / 100, '999,999,999,999.999999')#>
+                                    <td style="font-size: 0.9em;" align="center">#actual#&nbsp;#application.tz#</td>
+                                    <cfset totalSum = totalSum + #delegators.balance[i]#>
                                     <cfset totalRewards = totalRewards + #delegators.rewards[i]#>
-                                    <cfset totalActual = totalActual + #actual#>
+                                    <cfset totalActual = totalActual + #actual * application.militez#>
                                  </tr>
                               </cfloop>
 
                               <tr>
-                                 <td align="left" >Total</td>
-                                 <td align="left"></td>
-                                 <td align="center" >#LSNumberFormat(totalSum, '999,999,999,999.99')#&nbsp;#application.tz#</td>
-                                 <td align="center" ></td>
-               	 	         <td align="center" >#LSNumberFormat(totalRewards, '999,999,999,999.99')#&nbsp;#application.tz#</td>
-                                 <td align="center">#LSNumberFormat((totalRewards - totalActual), '999,999,999,999.99')#&nbsp;#application.tz#</td>
-                                 <td align="center">#LSNumberFormat(totalActual, '999,999,999,999.99')#&nbsp;#application.tz#</td>
+                                 <td  style="font-size: 0.9em;" align="left" >Total</td>
+                                 <td  style="font-size: 0.9em;" align="left"></td>
+                                 <td  style="font-size: 0.9em;" align="center" >#LSNumberFormat(totalSum, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
+                                 <td style="font-size: 0.9em;"  align="center" ></td>
+               	 	         <td  style="font-size: 0.9em;" align="center" >#LSNumberFormat(totalRewards / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
+                                 <td  style="font-size: 0.9em;" align="center">#LSNumberFormat(((totalRewards/ application.militez) - (totalActual / application.militez)), '999,999,999,999.999999')#&nbsp;#application.tz#</td>
+                                 <td  style="font-size: 0.9em;" align="center">#LSNumberFormat(totalActual / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                               </tr>
 
                               <cfinput name="address" type="hidden" value="">

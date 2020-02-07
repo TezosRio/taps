@@ -73,7 +73,7 @@
 		              <td align="center" >#delegatorsPayments.address[i]#</td>
 		              <td align="center" >#DateFormat(delegatorsPayments.date[i], 'MM/DD/YYYY')#</td>
 		              <td align="center" >#delegatorsPayments.result[i]#</td>
-		              <td align="center" >#LSNumberFormat(delegatorsPayments.total[i], '999,999,999,999.99')#&nbsp;#application.tz#</td>
+		              <td align="center" >#LSNumberFormat(delegatorsPayments.total[i] / application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                               <cfset totalSum = totalSum + #delegatorsPayments.total[i]#>
 		             
 		           </tr>
@@ -83,7 +83,7 @@
                            <td align="left">Total Sum</td>
                            <td></td>
                            <td align="center"></td>
-		           <td align="center" >#LSNumberFormat(totalSum, '999,999,999,999.99')#&nbsp;#application.tz#</td>
+		           <td align="center" >#LSNumberFormat(totalSum/ application.militez, '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                         </tr>
                         <tr>
                            <td></td>

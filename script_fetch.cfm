@@ -46,6 +46,8 @@
 
 <!--- Compare network pending rewards cycle with local pending rewards cycle --->
 <!--- If network pending reward is higher than local pending reward, then, probably, new rewards were delivered --->
+
+
 <cfif #networkPendingRewardsCycle# GT #localPendingRewardsCycle#>
 
      <!---
@@ -60,7 +62,6 @@
      <!--- If last rewards delivery cycle (according to the network) is equal to local database Pending delivery cycle --->
      <!--- it means that the rewards for that cycle have been delivered --->
      <cfif #lastRewardsDeliveryCycle# EQ #localPendingRewardsCycle#>
-           
          <!---
          Blockchain has delivered fresh new baked XTZ!
          Lets distribute rewards to our delegators.

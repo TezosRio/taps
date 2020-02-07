@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.1.4">
+       <cfset application.version = "1.1.5">
        <cfset application.militez = 1000000>
        <cfset application.port = 8888>
        <cfset application.mode_no = "0">
@@ -58,7 +58,7 @@
        <cfset application.mode_desc_no = "off">
        <cfset application.mode_desc_try = "simulation">
        <cfset application.mode_desc_yes = "on">
-       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.0.9.jar">
+       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.2.2.jar">
        <cfset application.tz_default_operation_fee = "0.00294">
 
        <!--- Some application variables initialization --->
@@ -72,6 +72,7 @@
        <cfset application.encSeed = "?73205!"> <!--- Used to hash sensible information along the code --->
        <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
        <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
+       <cfset application.provider = "https://tezos-prod.cryptonomic-infra.tech">
 
        <!--- Create needed database tables --->
        <cfinvoke component="components.environment" method="createTables">

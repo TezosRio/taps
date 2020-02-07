@@ -28,7 +28,7 @@
       <cfset var tezosHead = "">
 
       <!--- Gets the Tezos HEAD information from RPC API --->
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/head/metadata" method="get" result="result" charset="utf-8"
+      <cfhttp url="#application.provider#/chains/main/blocks/head/metadata" method="get" result="result" charset="utf-8"
               proxyServer="#application.proxyServer#"  
               proxyport="#application.proxyPort#" /> 
 
@@ -43,7 +43,7 @@
       <cfset var tezosConstants = "">
 
       <!--- Gets the Tezos Constants information from RPC API --->
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/head/context/constants" method="get" result="result" charset="utf-8"
+      <cfhttp url="#application.provider#/chains/main/blocks/head/context/constants" method="get" result="result" charset="utf-8"
               proxyServer="#application.proxyServer#"
               proxyport="#application.proxyPort#" /> 
 
@@ -87,7 +87,7 @@
       <cfset var delegators = "">
 
       <!--- Gets the baker's delegators from RPC API --->
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/head/context/delegates/#bakerID#/delegated_contracts" method="get" result="result" charset="utf-8"
+      <cfhttp url="#application.provider#/chains/main/blocks/head/context/delegates/#bakerID#/delegated_contracts" method="get" result="result" charset="utf-8"
               proxyServer="#application.proxyServer#"  
               proxyport="#application.proxyPort#" /> 
 
@@ -113,7 +113,7 @@
       <cfset level = #arguments.cycle * blocksPerCycle + 1# >
 
       Grab the RollSnapShot value from RPC API 
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/#level#/context/raw/json/cycle/#arguments.cycle#"
+      <cfhttp url="#application.provider#/chains/main/blocks/#level#/context/raw/json/cycle/#arguments.cycle#"
               method="get"
               result="result"
               charset="utf-8"
@@ -127,7 +127,7 @@
       <cfset blockHash = #((arguments.cycle - preservedCycles - 2) * blocksPerCycle) + (usedSnapshot + 1) * 256#>
 
       Gets the baker's staking balance from RPC API 
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/#blockHash#/context/delegates/#arguments.bakerID#/staking_balance"
+      <cfhttp url="#application.provider#/chains/main/blocks/#blockHash#/context/delegates/#arguments.bakerID#/staking_balance"
               method="get"
               result="totalStaking"
               charset="utf-8"
@@ -136,7 +136,7 @@
 
       Gets the delegator's staking balance from RPC API 
       <cfset delegatorAddress="">
-      <cfhttp url="http://127.0.0.1:8732/chains/main/blocks/#blockHash#/context/raw/json/contracts/index/#delegatorAddress#/frozen_balance/#arguments.cycle#/"
+      <cfhttp url="#application.provider#/chains/main/blocks/#blockHash#/context/raw/json/contracts/index/#delegatorAddress#/frozen_balance/#arguments.cycle#/"
               method="get"
               result="stakingBalance"
               charset="utf-8"
@@ -208,97 +208,97 @@
                          <cfset stakingBalance=#delegators.delegate_staking_balance#>
 			 <cfset arrayDelegators=#delegators.delegators_balance#>
 			 <cfset qtdDelegators=#ArrayLen(arrayDelegators)#>
-			 <cfset totalStakingBalance = #delegators.delegate_staking_balance# / militez>                         
+			 <cfset totalStakingBalance = #delegators.delegate_staking_balance#>                         
 
                          <cftry>
-		            <cfset blocksRewards = #delegators.blocks_rewards# / militez>
+		            <cfset blocksRewards = #delegators.blocks_rewards#>
                          <cfcatch>
    		            <cfset blocksRewards = 0>   
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset endorsementsRewards = #delegators.endorsements_rewards# / militez>
+		            <cfset endorsementsRewards = #delegators.endorsements_rewards#>
                          <cfcatch>
 		            <cfset endorsementsRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset fees = #delegators.fees# / militez>
+		            <cfset fees = #delegators.fees#>
                          <cfcatch>
 		            <cfset fees = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset futureBlocksRewards = #delegators.future_blocks_rewards# / militez>
+		            <cfset futureBlocksRewards = #delegators.future_blocks_rewards#>
                          <cfcatch>
 		            <cfset futureBlocksRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset futureEndorsementsRewards = #delegators.future_endorsements_rewards# / militez>
+		            <cfset futureEndorsementsRewards = #delegators.future_endorsements_rewards#>
                          <cfcatch>
 		            <cfset futureEndorsementsRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset gainFromDenounciation = #delegators.gain_from_denounciation# / militez>	
+		            <cfset gainFromDenounciation = #delegators.gain_from_denounciation#>	
                          <cfcatch>
   		            <cfset gainFromDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset revelationRewards = #delegators.revelation_rewards# / militez>
+		            <cfset revelationRewards = #delegators.revelation_rewards#>
                          <cfcatch>
 		            <cfset revelationRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostDepositsFromDenounciation =  #delegators.lost_deposit_from_denounciation# / militez>	
+		            <cfset lostDepositsFromDenounciation =  #delegators.lost_deposit_from_denounciation#>	
                          <cfcatch>
 		            <cfset lostDepositsFromDenounciation =  0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRewardsDenounciation = #delegators.lost_rewards_denounciation# / militez>	
+		            <cfset lostRewardsDenounciation = #delegators.lost_rewards_denounciation#>	
                          <cfcatch>
 		            <cfset lostRewardsDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostFeesDenounciation = #delegators.lost_fees_denounciation# / militez>	
+		            <cfset lostFeesDenounciation = #delegators.lost_fees_denounciation#>	
                          <cfcatch>
 		            <cfset lostFeesDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRevelationRewards =  #delegators.lost_revelation_rewards# / militez>	
+		            <cfset lostRevelationRewards =  #delegators.lost_revelation_rewards#>	
                          <cfcatch>
 		            <cfset lostRevelationRewards =  0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRevelationFees = #delegators.lost_revelation_fees# / militez>
+		            <cfset lostRevelationFees = #delegators.lost_revelation_fees#>
                          <cfcatch>
 		            <cfset lostRevelationFees = 0>
                          </cfcatch>
                          </cftry>
 
-	   <cfset totalRewards = (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) >
+	   <cfset totalRewards = (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) / militez >
 
 			 <cfloop from="1" to="#qtdDelegators#" index="key">
                             <cfif #arrayDelegators[key].balance# GT 0>
-	 		            <cfset share = #((arrayDelegators[key].balance / totalStakingBalance) / militez) * 100#> 
+	 		            <cfset share = #((arrayDelegators[key].balance / totalStakingBalance)) * 100#> 
 				    <cfset delegator_reward = (totalRewards * share) / 100>
 
 					    <cfset QueryAddRow(queryDelegators, 1)> 
@@ -306,9 +306,9 @@
 					    <cfset QuerySetCell(queryDelegators, "cycle", javacast("integer", "#rewardsInfo.cycle#"))>
 					    <cfset QuerySetCell(queryDelegators, "delegate_staking_balance", javacast("long", "#stakingBalance#"))>  
 					    <cfset QuerySetCell(queryDelegators, "address", javacast("string", "#arrayDelegators[key].account.tz#"))> 
-					    <cfset QuerySetCell(queryDelegators, "balance", javacast("string", "#arrayDelegators[key].balance#"))> 
+					    <cfset QuerySetCell(queryDelegators, "balance", javacast("long", "#arrayDelegators[key].balance#"))> 
 					    <cfset QuerySetCell(queryDelegators, "share", javacast("string", "#share#"))> 
-					    <cfset QuerySetCell(queryDelegators, "rewards", javacast("string", "#LSCurrencyFormat(delegator_reward,"none","en_US")#"))> 
+					    <cfset QuerySetCell(queryDelegators, "rewards", javacast("long", "#LSNumberFormat(delegator_reward, '999999999999.999999')#"))> 
                             </cfif>		
 			 </cfloop>
 
@@ -418,90 +418,90 @@
 	<cfset rewardsDetails = deserializeJson(rewardsInfo)>
 
 	 <cftry>
-	    <cfset blocksRewards = #rewardsDetails.blocks_rewards# / militez>
+	    <cfset blocksRewards = #rewardsDetails.blocks_rewards#>
 	 <cfcatch>
 	    <cfset blocksRewards = 0>   
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset endorsementsRewards = #rewardsDetails.endorsements_rewards# / militez>
+	    <cfset endorsementsRewards = #rewardsDetails.endorsements_rewards#>
 	 <cfcatch>
 	    <cfset endorsementsRewards = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset fees = #rewardsDetails.fees# / militez>
+	    <cfset fees = #rewardsDetails.fees#>
 	 <cfcatch>
 	    <cfset fees = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset futureBlocksRewards = #rewardsDetails.future_blocks_rewards# / militez>
+	    <cfset futureBlocksRewards = #rewardsDetails.future_blocks_rewards#>
 	 <cfcatch>
 	    <cfset futureBlocksRewards = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset futureEndorsementsRewards = #rewardsDetails.future_endorsements_rewards# / militez>
+	    <cfset futureEndorsementsRewards = #rewardsDetails.future_endorsements_rewards#>
 	 <cfcatch>
 	    <cfset futureEndorsementsRewards = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset gainFromDenounciation = #rewardsDetails.gain_from_denounciation# / militez>	
+	    <cfset gainFromDenounciation = #rewardsDetails.gain_from_denounciation#>	
 	 <cfcatch>
 	    <cfset gainFromDenounciation = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset revelationRewards = #rewardsDetails.revelation_rewards# / militez>
+	    <cfset revelationRewards = #rewardsDetails.revelation_rewards#>
 	 <cfcatch>
 	    <cfset revelationRewards = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset lostDepositsFromDenounciation =  #rewardsDetails.lost_deposit_from_denounciation# / militez>	
+	    <cfset lostDepositsFromDenounciation =  #rewardsDetails.lost_deposit_from_denounciation#>	
 	 <cfcatch>
 	    <cfset lostDepositsFromDenounciation =  0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset lostRewardsDenounciation = #rewardsDetails.lost_rewards_denounciation# / militez>	
+	    <cfset lostRewardsDenounciation = #rewardsDetails.lost_rewards_denounciation#>	
 	 <cfcatch>
 	    <cfset lostRewardsDenounciation = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset lostFeesDenounciation = #rewardsDetails.lost_fees_denounciation# / militez>	
+	    <cfset lostFeesDenounciation = #rewardsDetails.lost_fees_denounciation#>	
 	 <cfcatch>
 	    <cfset lostFeesDenounciation = 0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset lostRevelationRewards =  #rewardsDetails.lost_revelation_rewards# / militez>	
+	    <cfset lostRevelationRewards =  #rewardsDetails.lost_revelation_rewards#>	
 	 <cfcatch>
 	    <cfset lostRevelationRewards =  0>
 	 </cfcatch>
 	 </cftry>
 
 	 <cftry>
-	    <cfset lostRevelationFees = #rewardsDetails.lost_revelation_fees# / militez>
+	    <cfset lostRevelationFees = #rewardsDetails.lost_revelation_fees#>
 	 <cfcatch>
 	    <cfset lostRevelationFees = 0>
 	 </cfcatch>
 	 </cftry>
 
-	<cfset totalRewards = (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) >
+	<cfset totalRewards =( (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) ) / militez >
 
       <cfcatch>
       </cfcatch>

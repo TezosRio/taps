@@ -20,7 +20,6 @@
    <cfset threeMinutes = 180000> <!--- In miliseconds --->
    <cfset tenMinutesMili = 600000> <!--- In miliseconds --->
 
-
    <!--- Methods ---> 
 
    <!--- This is the TAPS core routine. It distributes the share of the rewards to the delegators  --->
@@ -117,7 +116,7 @@
                <cfset myWallet = tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
                
                <!--- Change RPC provider --->
-               <cfset myWallet.setProvider("https://tezos-prod.cryptonomic-infra.tech")>
+               <cfset myWallet.setProvider("#application.provider#")>
                
                <cfset from = "#myWallet.getPublicKeyHash()#">
             </cfif>
@@ -144,9 +143,9 @@
 
                <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, pay rewards with default fee --->
                <cfif #local_get_fee.recordCount# GT 0>
-                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
+                  <cfset paymentValue = #((arguments.delegators.rewards / application.militez) * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
                <cfelse>
-                  <cfset paymentValue = #(arguments.delegators.rewards * ((100 - defaultFee) / 100) * 100) / 100#>
+                  <cfset paymentValue = #((arguments.delegators.rewards / application.militez) * ((100 - defaultFee) / 100) * 100) / 100#>
                </cfif>
 
                <!--- Time to check what will be the origin of the funds: Native wallet or node funds --->
@@ -283,7 +282,7 @@
    	    <cfset result = myWallet.flushTransactionBatch("15400", "300")>
 
             <!--- Wait for operation to finish safely --->
-            <cfsleep time = "#tenMinutesMili#">
+            <cfsleep time = "#threeMinutes#">
 
            <!--- Log the operation result --->
             <cfset strPath = ExpandPath( "./" ) />
