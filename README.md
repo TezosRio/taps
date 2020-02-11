@@ -57,15 +57,16 @@ These step-by-step instructions should be followed if you already have Taps inst
 
 2) Stop Lucee server with the command: sudo /opt/lucee/lucee_ctl stop
 
-3) Backup your current Taps folder (/opt/lucee/tomcat/webapps/taps or /opt/lucee/tomcat/webapps/ROOT/taps) to some directory  
-   outside Lucee directory tree (this way if things go wrong, you may undo).
+3) Backup your current Taps folder (/opt/lucee/tomcat/webapps/taps or /opt/lucee/tomcat/webapps/ROOT/taps) to some directory outside Lucee directory tree (this way if things go wrong, you may undo).
 
 4) Open a Terminal prompt and go to current Taps folder: cd /opt/lucee/tomcat/webapps/taps
 
 5) Now we are going to update it from github repository with the commands:
 
    git fetch -all
+   
    git reset -hard origin master
+   
    
 6) Start Lucee with the command:  sudo /opt/lucee/lucee_ctl start
 
