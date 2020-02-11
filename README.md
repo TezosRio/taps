@@ -92,6 +92,7 @@ Many features are not fully tested/implemented yet.
 - (NEW!) Batch Transaction Payments!
 - (NEW!) Bond Pool configuration and automatic payments!
 - (FIXED) Six decimal places accuracy payment - Solves "So-So" annotation on BakingBad.
+- (FIXED) Page "PAYMENTS" and PDF report were showing 2 decimal places.
 
 ## Credits
 
