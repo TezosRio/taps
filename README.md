@@ -49,7 +49,7 @@ Two articles may be a good start:
      so, don't worry, any real transfers will be done.
         
 
-## UPGRADING TAPS
+## Upgrading TAPS
 
 These step-by-step instructions should be followed if you already have Taps installed on your system and want to UPGRADE to a new version available at gitHub:
 
