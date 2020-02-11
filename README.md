@@ -63,9 +63,9 @@ These step-by-step instructions should be followed if you already have Taps inst
 
 5) Now we are going to update it from github repository with the commands:
 
-   git fetch -all
+   sudo git fetch --all
    
-   git reset -hard origin master
+   sudo git reset --hard origin/master
    
    
 6) Start Lucee with the command:  sudo /opt/lucee/lucee_ctl start
