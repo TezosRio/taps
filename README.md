@@ -1,6 +1,6 @@
 # TAPS (Tezos Automatic Payment System)
 
-**TAPS** enables Tezos Bakers to automate rewards distribution.
+**TAPS** enables Tezos Bakers to automate rewards distribution with a web-page like interface.
 
 It is written in CFML language (Coldfusion/Lucee). This repository contains all needed source code to run. However, there are some requirements.
 
@@ -42,12 +42,35 @@ Two articles may be a good start:
    - Start TAPS in your browser with http://127.0.0.1:8888/taps/index.cfm
    - Log in TAPS with default user/pass: admin/admin.
    
-   Note: On UBUNTU TAPS folder must be in /opt/lucee/tomcat/webapps/ROOT/
+   Note: On (some) UBUNTU installations TAPS folder must be in /opt/lucee/tomcat/webapps/ROOT/
    
 7) Usage.
    - Go to TAPS SETUP page and enter your Baker's details. TAPS starts in simulation mode,
      so, don't worry, any real transfers will be done.
         
+
+## UPGRADING TAPS
+
+These step-by-step instructions should be followed if you already have Taps installed on your system and want to UPGRADE to a new version available at gitHub:
+
+1) (Always!) Write down in a piece of paper your Taps Native Wallet mnemonic words and passphrase.
+
+2) Stop Lucee server with the command: sudo /opt/lucee/lucee_ctl stop
+
+3) Backup your current Taps folder (/opt/lucee/tomcat/webapps/taps or /opt/lucee/tomcat/webapps/ROOT/taps) to some directory  
+   outside Lucee directory tree (this way if things go wrong, you may undo).
+
+4) Open a Terminal prompt and go to current Taps folder: cd /opt/lucee/tomcat/webapps/taps
+
+5) Now we are going to update it from github repository with the commands:
+
+   git fetch -all
+   git reset -hard origin master
+   
+6) Start Lucee with the command:  sudo /opt/lucee/lucee_ctl start
+
+7) Open Taps from your preferred browser with: http://127.0.0.1:8888/taps/index.cfm. It should now show the latest version.
+
 
 ## Disclaimer
 
@@ -67,12 +90,11 @@ Many features are not fully tested/implemented yet.
 - Stores payments history.
 - (NEW!) Batch Transaction Payments!
 - (NEW!) Bond Pool configuration and automatic payments!
+- (FIXED) Six decimal places accuracy payment - Solves "So-So" annotation on BakingBad.
 
 ## Credits
 
 - TAPS is a [Tezos.Rio](https://tezos.rio) team open-source product.
-- TAPS uses [TzScan.io](https://tzscan.io) API to fetch information from the Tezos blockchain.
-- TAPS uses [Tezos-client](https://tezos.com) software to make transfers and inject operations on Tezos blockchain.
 
 ## License
 
