@@ -708,6 +708,9 @@
          <!--- Check if table bondPool exists. If it doesn't, create it --->
          <cfinvoke component="components.database" method="checkBondPoolTables" returnVariable="checkResult">
 
+         <!--- Check and correct to six decimals places on tables payments and delegatorsPayments --->
+         <cfinvoke component="components.database" method="checkSixDecimals" returnVariable="checkDecimalsResult">
+
       <cfcatch>
       </cfcatch>
       </cftry>

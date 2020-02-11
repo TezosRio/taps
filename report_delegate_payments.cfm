@@ -77,7 +77,7 @@
                  <td align="left" style="font-size:9pt;font-family:Courier;">#delegators_cycle_ordered.address#</td>
                  <td align="center" style="font-size:9pt;font-family:Courier;">#DateFormat(delegators_cycle_ordered.date, 'MM/DD/YYYY')#</td>
                  <td align="center" style="font-size:9pt;font-family:Courier;">#delegators_cycle_ordered.result#</td>
-                 <td align="center" style="font-size:9pt;font-family:Courier;">#LSNumberFormat(delegators_cycle_ordered.total / application.militez, '999,999,999,999.999999')#</td>
+                 <td align="center" style="font-size:9pt;font-family:Courier;">#LSNumberFormat(delegators_cycle_ordered.total, '999,999,999,999.999999')#</td>
                </tr>
 
                <!--- Calculate totals --->
@@ -91,7 +91,7 @@
                <td align="left" style="font-size:9pt;font-family:Courier;">Sub-total</td>
                <td></td>
                <td align="center"></td>
-               <td align="center" style="font-size:9pt;font-family:Courier;" >#LSNumberFormat(subtotalSum / application.militez, '999,999,999,999.999999')#&nbsp;XTZ</td>
+               <td align="center" style="font-size:9pt;font-family:Courier;" >#LSNumberFormat(subtotalSum, '999,999,999,999.999999')#&nbsp;XTZ</td>
             </tr>
 
             <cfset subTotalSum = 0>
@@ -106,7 +106,7 @@
                <th align="left" style="font-size:9pt;font-family:Courier;">Total Sum</th>
                <th></th>
                <th></th>
-	       <th align="right" style="font-size:9pt;font-family:Courier;" >#LSNumberFormat(totalSum / application.militez, '999,999,999,999.999999')#&nbsp;XTZ</th>
+	       <th align="right" style="font-size:9pt;font-family:Courier;" >#LSNumberFormat(totalSum, '999,999,999,999.999999')#&nbsp;XTZ</th>
             </tr>
 
       </center>

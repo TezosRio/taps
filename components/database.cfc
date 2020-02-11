@@ -667,7 +667,7 @@
    </cffunction>
 
    <!--- Make sure that bondPool tables exists --->
-   <cffunction name="checkBondPoolTables " returntype="string">
+   <cffunction name="checkBondPoolTables" returntype="string">
       <cfset var result = true>
 
 	   <cftry>
@@ -765,6 +765,29 @@
       <cfreturn result>
    </cffunction>
 
+   <!--- Check six decimal places on tables payments and delegatorsPayments --->
+   <cffunction name="checkSixDecimals" returntype="string">
+      <cfset var result = true>
+
+	   <cftry>
+	      <cfquery name="checkPaymentsDecimals" datasource="ds_taps">
+		   ALTER TABLE payments ALTER COLUMN total DECIMAL(20,6) NOT NULL;
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+
+	   <cftry>
+	      <cfquery name="checkDelegatorsPaymentsDecimals" datasource="ds_taps">
+		   ALTER TABLE delegatorsPayments ALTER COLUMN total DECIMAL(20,6) NOT NULL;
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+      <cfreturn result>
+   </cffunction>
 
 
 </cfcomponent>
