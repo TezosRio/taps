@@ -63,9 +63,9 @@ These step-by-step instructions should be followed if you already have Taps inst
 
 5) Now we are going to update it from github repository with the commands:
 
-   git fetch -all
+   sudo git fetch --all
    
-   git reset -hard origin master
+   sudo git reset --hard origin/master
    
    
 6) Start Lucee with the command:  sudo /opt/lucee/lucee_ctl start
@@ -92,6 +92,7 @@ Many features are not fully tested/implemented yet.
 - (NEW!) Batch Transaction Payments!
 - (NEW!) Bond Pool configuration and automatic payments!
 - (FIXED) Six decimal places accuracy payment - Solves "So-So" annotation on BakingBad.
+- (FIXED) Page "PAYMENTS" and PDF report were showing 2 decimal places.
 
 ## Credits
 
