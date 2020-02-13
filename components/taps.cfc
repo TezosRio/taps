@@ -24,7 +24,7 @@
 
    <!--- This is the TAPS core routine. It distributes the share of the rewards to the delegators  --->
    <!--- Some information is stored in the local database in the process, so it is possible to check them later --->
-   <!--- Log files with the results from executing tezos-client transfers are also written, in the folder taps/logs --->
+   <!--- Log files with the results from transactions are also written, in the folder taps/logs --->
    <!--- When operating in Simulation mode, everything will be recorded, but payments will not be made for real --->
    <cffunction name="distributeRewards">
       <cfargument name="localPendingRewardsCycle" required="true" type="number" />
@@ -34,22 +34,23 @@
       <cfset var paymentDate = #dateFormat(now(),'mm-dd-yyyy')#>
       <cfset var settings = "">
       <cfset var operationMode = "">
-      <cfset var clientPath = "">
-      <cfset var nodeAlias = "">
-      <cfset var baseDir = "">
-      <cfset var operationResult = "">
-      <cfset var fundsOrigin = "">
+      <cfset var operationResultOutput = "">
       <cfset var strPath = "">
       <cfset var myWallet = "">
       <cfset var from = "">
       <cfset var TezosJ = "">
       <cfset var passphrase = "">
       <cfset var defaultFee = 0>
+      <cfset var transactionHash = "">
+      <cfset var blockchainConfirmed = false>
+      <cfset var tries = 1>
+      <cfset var logOutput = "">
 
       <!--- Override Lucee Administrator settings for request timeout --->
       <cfsetting requestTimeout = #twentyFourHours#>
 
-      <!--- First, update the payment date and the status in the local database --->
+      <!--- If we got here, it's because the Tezos blockchain has just delivered rewards for this cycle --->      
+      <!--- So, we must update the local database payments table with date and status (rewards_delivered) for this cycle --->     
       <cfquery name="update_local" datasource="ds_taps">   
           UPDATE payments SET
              DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy'),
@@ -58,258 +59,265 @@
              AND CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
       </cfquery>
 
-      <!--- Now, insert a new line with the current pending rewards cycle --->
-      <cfquery name="save_local_pending" datasource="ds_taps">   
-         INSERT INTO payments (BAKER_ID, CYCLE, DATE, RESULT, TOTAL)
-	 VALUES
-	 (
-	    <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
-            <cfqueryparam value="#arguments.networkPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
-	    parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy'),
-           '#rewardsPending#',
-	   0
-         )
+      <!--- We must also insert a new line with status rewards_pending for the next cycle --->
+      <!--- Unless there is already a line with that information (it may happen in some ocasions) --->
+      <cfquery name="check_pending" datasource="ds_taps">   
+         SELECT BAKER_ID FROM payments
+         WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+         AND   CYCLE = <cfqueryparam value="#arguments.networkPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
       </cfquery>
-
-      <!--- ErrorArray will be used to store failed transfers, so it will be possible to know who didn't receive rewards --->
-      <cfset errorArray = ArrayNew(1)> 
-      <cfset i = 1>
-      <cfset totalPaid = 0>
+      <cfif #check_pending.recordcount# EQ 0> <!--- There is no line yet, so insert a new one --->
+         <cfquery name="save_local_pending" datasource="ds_taps">   
+            INSERT INTO payments (BAKER_ID, CYCLE, DATE, RESULT, TOTAL)
+   	    VALUES
+	    (
+	       <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
+               <cfqueryparam value="#arguments.networkPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
+	       parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy'),
+              '#rewardsPending#',
+	      0
+            )
+         </cfquery>
+      </cfif>
      
-      <!--- Create a log file identified by current cycle --->
+      <!--- Create the logs folder, if it does not exist yet --->
       <cfset strPath = ExpandPath( "./" ) />
       <cfif Not DirectoryExists("#strPath#/logs")>
          <cfdirectory action = "create" directory="#strPath#/logs" />
       </cfif>
 
-      <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite">
-
-      <!--- Check the mode TAPS is working in (Simulation or On) --->
-      <!--- Also, get client_path, base_dir, and node_alias from the local database --->
-      <!--- Check if user configured to get resources from embedded native wallet ---> 
+      <!--- Get information about which mode TAPS is working in (Simulation or On) --->
       <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
       <cfif #settings.recordCount# GT 0>
          <cfset operationMode = #settings.mode#>
-         <cfset clientPath = "#settings.client_path#">
-         <cfset baseDir = "#settings.base_dir#">
-         <cfset nodeAlias = "#settings.node_alias#">
-         <cfset fundsOrigin = "#settings.funds_origin#">
          <cfset defaultFee = #settings.default_fee#>
       <cfelse>
          <cfset operationMode = "#application.mode_desc_try#">
       </cfif>
 
-      <!--- If funds origin are set to use embedded native wallet, instantiate TezosJ_SDK_plainJava and open the wallet --->
-      <cfif #fundsOrigin# EQ "native">
-            <cfset strPath = ExpandPath( "./" ) />
+      <!--- Decide what will be the operation result output for log purposes, according to the configured mode --->
+      <cfif #operationMode# EQ "#application.mode_desc_try#">
+         <cfset operationResultOutput="simulated">
+      <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
+         <cfset operationResultOutput="not available">
+      <cfelse> <!--- fallback is simulation mode --->
+         <cfset operationResultOutput="simulated"> 
+      </cfif>
 
-            <!--- Get TezosJ_SDK TezosWallet class --->
-            <cfset tezosJ = createObject("java", "milfont.com.tezosj.model.TezosWallet", "#strPath#/#application.TezosJ_SDK_location#")>
 
-	    <!--- Decrypt passphrase from the local database with app password --->
-	    <cfset passphrase = decrypt('#settings.app_phrase#', '#application.encSeed#')>
+      <!--- Instantiate TezosJ_SDK_plainJava and open the wallet --->
+      <cfset strPath = ExpandPath( "./" ) />
 
-	    <!--- Authenticate the owner of wallet with passphrase --->
-	    <cfinvoke component="components.database" method="authWallet" bakerId="#application.bakerId#" passdw="#passphrase#" returnVariable="authResult">
-	    <cfif #authResult# EQ true>
-               <!--- Instantiate a new wallet from previously saved file --->
-               <cfset myWallet = tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
+      <!--- Get TezosJ_SDK TezosWallet class --->
+      <cfset tezosJ = createObject("java", "milfont.com.tezosj.model.TezosWallet", "#strPath#/#application.TezosJ_SDK_location#")>
+
+      <!--- Decrypt passphrase from the local database with app password --->
+      <cfset passphrase = decrypt('#settings.app_phrase#', '#application.encSeed#')>
+
+      <!--- Authenticate the owner of wallet with passphrase --->
+      <cfinvoke component="components.database" method="authWallet" bakerId="#application.bakerId#" passdw="#passphrase#" returnVariable="authResult">
+      <cfif #authResult# EQ true>
+         <!--- Instantiate a new wallet from previously saved file --->
+         <cfset myWallet = tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
                
-               <!--- Change RPC provider --->
-               <cfset myWallet.setProvider("#application.provider#")>
-               
-               <cfset from = "#myWallet.getPublicKeyHash()#">
-            </cfif>
-     </cfif>   
+         <!--- Change RPC provider --->
+         <cfset myWallet.setProvider("#application.provider#")>
+         <cfset from = "#myWallet.getPublicKeyHash()#">
+      </cfif>
 
-     <!--- Initialize TezosJ_SDK Transaction Batch --->
-     <cfset result = myWallet.clearTransactionBatch()>
 
-      <!--- Make rewards payment to delegators --->  
-      <!--- Loop through delegators and do transfers (or simulate them, depending on mode) --->
+   <!--- Main rewards distribution loop --->
+   <!--- Will try to pay until there is a blockchain confirmation OR the number of tries reaches limit --->
+   <cftry>
+   <cfloop condition="(#blockchainConfirmed# EQ false) AND (#tries# LTE #application.paymentRetries#)">
+
+      <!--- Create/Clear new log files --->
+      <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite" mode="777">
+      <cffile file="../logs/last_error_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite" mode="777">
+      <cffile file="../logs/batch_result_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite" mode="777">
+      <cffile file="../logs/bondPool_transactions_#arguments.localPendingRewardsCycle#.log" action="write" output="" nameConflict="overwrite" mode="777">
+
+      <!--- Initiate totalPaid variable with zero --->
+      <cfset totalPaid = 0>
+
+      <!--- Clear table delegatorsPayments for the current cycle --->
+      <cfquery name="save_local_pending" datasource="ds_taps">   
+         DELETE FROM delegatorsPayments
+         WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+         AND   CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
+      </cfquery>
+
+     <!--- Initialize/Clear TezosJ_SDK Transaction Batch --->
+     <cfset void = myWallet.clearTransactionBatch()>
+
+      <!--- Inner rewards distribution loop --->
+      <!--- Loop through delegators and mount a collection (batch) of transactions that will be sent later --->  
       <cfloop query="#arguments.delegators#">
          <!--- We always keep 3 cycles of rewards information in the local database, so we have to get only the rewards --->
-         <!--- corresponding to the pending_reward cycle --->
-         <cfif #arguments.delegators.cycle# EQ #arguments.localPendingRewardsCycle#>
-               <!--- Initialize delegator's payment value with zero --->
+         <!--- corresponding to the pending_rewards cycle --->
+         <cfif #arguments.delegators.cycle# EQ #arguments.localPendingRewardsCycle#> <!--- Filter for the current cycle --->
+               <!--- Initialize individual delegator's payment value with zero --->
                <cfset paymentValue = 0>
 
-               <!--- Calculate delegator's payment considering custom fee --->
+               <!--- Calculate indivudual delegator's payment considering custom fee --->
                <cfquery name="local_get_fee" datasource="ds_taps">
                   SELECT FEE FROM delegatorsFee
                   WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
                   AND   ADDRESS  = <cfqueryparam value="#delegators.address#" sqltype="CF_SQL_VARCHAR" maxlength="50"> 
                </cfquery>
 
-               <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, pay rewards with default fee --->
+               <!--- If there is a fee stored in the local database for this delegator, use it. Otherwise, use default fee --->
                <cfif #local_get_fee.recordCount# GT 0>
                   <cfset paymentValue = #((arguments.delegators.rewards / application.militez) * ((100 - local_get_fee.fee) / 100) * 100) / 100#>
                <cfelse>
                   <cfset paymentValue = #((arguments.delegators.rewards / application.militez) * ((100 - defaultFee) / 100) * 100) / 100#>
                </cfif>
+                      
+               <!--- If operation mode is ON, then adds a transaction to the batch --->
+               <cfif #operationMode# EQ "#application.mode_desc_yes#">
 
-               <!--- Time to check what will be the origin of the funds: Native wallet or node funds --->
-               <cfif #fundsOrigin# EQ "node">
+                  <!--- Only consider a payment valid if value is higher than zero --->
+                  <cfif #paymentValue# GT 0>
 
-                  <!--- Funds origin node, then we have to build dynamically the command that will be passed to the Tezos-client to be executed --->
+	                <!--- Add payment transaction information to transaction batch (for sending later) --->
+	                <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
 
-                  <!--- Build Tezos-client transfer command --->
-                  <cfset tezosCommand = "@@@clientPath@@@/tezos-client --base-dir @@@baseDir@@@ transfer @@@value@@@ from @@@nodeAlias@@@ to @@@destAddress@@@">
-               
-                  <!--- Decide whether to do real transfers or simulate them, according to the configured mode --->
-                  <cfif #operationMode# EQ "#application.mode_desc_try#">
-                     <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
-                     <cfset operationResult="simulated">
-                  <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
-                     <cfset tezosArguments = "--fee 0.05">                   <!--- For real! Will pay! --->
-                     <cfset operationResult="paid">
-                  <cfelse> <!--- fallback is simulation mode --->
-                     <cfset tezosArguments = "--fee 0.05 --dry-run">         <!--- Dry-run = Simulation only --->
-                     <cfset operationResult="simulated"> 
+                        <!--- Define the message that will be saved in the log ---> 
+                        <cfset logOutput = "Added send transaction: #paymentValue# tez from #from# to #arguments.delegators.address#"> 
+
+                  <cfelse> <!--- Nothing to be paid, value is zero --->
+
+                     <!--- Define the message that will be saved in the log ---> 
+                     <cfset logOutput = "Ignored send to #arguments.delegators.address# as value is 0"> 
+
                   </cfif>
 
-                  <!--- Make proper substitutions in the dynamic command --->
-                  <cfset tezosCommand = replace(tezosCommand, "@@@clientPath@@@", "#clientPath#")>
-                  <cfset tezosCommand = replace(tezosCommand, "@@@baseDir@@@", "#baseDir#/.tezos-client")>
-                  <cfset tezosCommand = replace(tezosCommand, "@@@value@@@", "#paymentValue#")>
-                  <cfset tezosCommand = replace(tezosCommand, "@@@nodeAlias@@@", "#nodeAlias#")>
-                  <cfset tezosCommand = replace(tezosCommand, "@@@destAddress@@@", "#arguments.delegators.address#")>
-                  <!--- Now we have the dynamic command ready to be executed by Tezos-client --->
 
-               <cfelseif #fundsOrigin# EQ "native">
+               <cfelse> <!--- Simulation mode --->
 
-                  <!--- Funds origin native --->
-
-                  <!--- Decide whether to do real transfers or simulate them, according to the configured mode --->
-                  <cfif #operationMode# EQ "#application.mode_desc_try#">
-                     <cfset operationResult="simulated">
-                  <cfelseif #operationMode# EQ "#application.mode_desc_yes#">
-                     <cfset operationResult="paid">
-                  <cfelse> <!--- fallback is simulation mode --->
-                     <cfset operationResult="simulated"> 
+                  <!--- Only consider a payment valid if value is higher than zero --->
+                  <cfif #paymentValue# GT 0>
+                     <!--- Define the message that will be saved in the log ---> 
+                     <cfset logOutput = "Simulated send #paymentValue# tez from #from# to #arguments.delegators.address#"> 
+                  <cfelse> <!--- Nothing to be paid, value is zero --->
+                     <!--- Define the message that will be saved in the log ---> 
+                     <cfset logOutput = "Simulation ignored send to #arguments.delegators.address# as value is 0"> 
                   </cfif>
 
                </cfif>
-   
-               <!--- Now it's the time for action --->
-               <cftry>
 
-                  <!--- If funds origin is node, execute transfer using tezos-client software --->
-                  <cfif #fundsOrigin# EQ "node">
 
-                      <!-- Execute Tezos-client transfer command --->
-	              <cfexecute variable="result"
-                              errorvariable="error"
-                              timeout="#tenMinutes#"
-                              terminateontimeout = false
-                              name="#tezosCommand#"
-                              arguments="#tezosArguments#">
-                      </cfexecute>
+               <cfoutput>
+               <!--- Write log file with results in folder taps/logs --->
+               <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="append" output="#logOutput#">
 
-                  <!--- Otherwise, if funds origin is native, transfer from the embedded native wallet --->
-                  <cfelseif #fundsOrigin# EQ "native">
-                      
-                     <!--- If operation mode is ON, then make real transfers --->
-                     <cfif #operationMode# EQ "#application.mode_desc_yes#">
-
-                         <cfset result="">
-  
-                         <cfif #paymentValue# GT 0>
-		            <!--- Add payment transaction information to transaction batch --->
-		            <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.delegators.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
-                         </cfif>
-
-                     <cfelse>
-                        <cfset result = "Simulated send #paymentValue# xtz from #from# to #arguments.delegators.address#"> 
-                     </cfif>
-
-                  </cfif>
-
-                  <cfoutput>
-
-                      <!--- Write Log files with Tezos-client execution results in folder taps/logs --->
-                      <cffile file="../logs/payments_#arguments.localPendingRewardsCycle#.log" action="append" output="#result#">
-
-                      <!--- Save the delegator payment information in the local database --->
-                      <cfquery name="save_local_pending" datasource="ds_taps">   
-			    INSERT INTO delegatorsPayments (BAKER_ID, CYCLE, ADDRESS, DATE, RESULT, TOTAL)
-			    VALUES
-			    (
-			        <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
-                                <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
-                                <cfqueryparam value="#arguments.delegators.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
-        			parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy'),
-                                '#operationResult#',
-                                <cfqueryparam value="#paymentValue#" sqltype="CF_SQL_NUMERIC" maxlength="50">
-			    )
-		      </cfquery>
-
-                      <!--- Accumulate the total paid --->
-                      <cfset totalPaid = totalPaid + #paymentValue#>
-
-                  </cfoutput>
-
-               <cfcatch>
-                  <cffile file="../logs/last_error.log" action="write" output="#cfcatch.message#">
-
-                  <!--- If some error ocurred in Tezos-client transfer execution OR TezosJ_SDK transfer --->
-                  <cfset errorArray[i] = "#arguments.delegators.address#">
-                  <cfset i = i + 1>
-                  
-                  <!--- Save the error information on delegator payment table in the local database --->
-		  <cfquery name="save_local_pending" datasource="ds_taps">   
-		    INSERT INTO delegatorsPayments (BAKER_ID, CYCLE, ADDRESS, DATE, RESULT, TOTAL)
+               <!--- Save the delegator payment information in the local database --->
+               <cfquery name="save_local_pending" datasource="ds_taps">   
+		    INSERT INTO delegatorsPayments (BAKER_ID, CYCLE, ADDRESS, DATE, RESULT, TOTAL, TRANSACTION_HASH)
 		    VALUES
 		    (
 		        <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
-        		<cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
+                        <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
                         <cfqueryparam value="#arguments.delegators.address#" sqltype="CF_SQL_VARCHAR" maxlength="50">,
         		parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy'),
-        		'error',
-        		0 
+                        '#operationResultOutput#',
+                        <cfqueryparam value="#paymentValue#" sqltype="CF_SQL_NUMERIC" maxlength="50">,
+                        <cfqueryparam value="#transactionHash#" sqltype="CF_SQL_VARCHAR" maxlength="70">
 		    )
-		  </cfquery>
+		</cfquery>
 
-               </cfcatch>
-               </cftry>
-         </cfif>
-      </cfloop>
+                <!--- Accumulate the total paid --->
+                <cfset totalPaid = totalPaid + #paymentValue#>
+                </cfoutput>
 
-      <cfif #fundsOrigin# EQ "native">
-         <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
-         <cfif #operationMode# EQ "#application.mode_desc_yes#">
+         </cfif> <!--- Filter for the current cycle --->
+      </cfloop> <!--- Loop through delegators --->
+
+
+      <!--- At this point we've got an entire collection (batch) of transactions ready to send --->
+
+      <!--- If Taps operation mode is set to ON, then we will send transaction batch for real, otherwise we won't --->
+      <cfif #operationMode# EQ "#application.mode_desc_yes#">
+
+         <cftry>
             <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
-   	    <cfset result = myWallet.flushTransactionBatch("15400", "300")>
+            <cfset resultJson = myWallet.flushTransactionBatch("#application.gasLimit#", "#application.storageLimit#")>
 
-            <!--- Wait for operation to finish safely --->
-            <cfsleep time = "#threeMinutes#">
+            <!--- Extract transaction hash from result --->
+            <cfset resultStruct = #deserializeJson(resultJson)#>
+            <cfset transactionHash = "#replace(resultStruct.result, chr(34), '', 'all')#">
 
-           <!--- Log the operation result --->
-            <cfset strPath = ExpandPath( "./" ) />
-            <cfif Not DirectoryExists("#strPath#/logs")>
-               <cfdirectory action = "create" directory="#strPath#/logs" />
+            <cfif (#findNoCase("error", transactionHash)# GT 0) OR (#len(transactionHash)# LT 40) OR (#len(transactionHash)# GT 60)>
+               <cfthrow message = "#transactionHash#">
             </cfif>
-	    <cffile file="../logs/batch_result.log" action="write" output="#result#">
 
-         </cfif>
+            <!--- Wait for and check if batch transaction was confirmed in Tezos blockchain --->
+            <cfset blockchainConfirmed = myWallet.waitForAndCheckResult("#transactionHash#", #application.numberOfBlocksToWait#)>
+         <cfcatch>
+            <cfset blockchainConfirmed = false>
+
+            <!--- Save to log the error information --->
+            <cffile file="../logs/last_error_#arguments.localPendingRewardsCycle#.log" action="append" output="#cfcatch.message# #cfcatch.detail#">
+
+         </cfcatch>
+         </cftry>
       </cfif>
+
+      <!--- If there the transaction failed in Tezos blockchain, wait some minutes and try again --->
+      <cfif #blockchainConfirmed# EQ false>
+         <!--- Waits some minutes until next try --->
+         <cfsleep time = "#(application.minutesBetweenTries * 60) * 1000#"> 
+
+         <!--- Updates the number of payment tries --->
+         <cfset tries = tries + 1>
+      </cfif>
+
+    </cfloop> <!--- Tries to pay until there is a blockchain confirmation OR reached maximum number of times --->
+    <cfcatch>
+       <cfset blockchainConfirmed = false>
+
+      <!--- Save to log the error information --->
+      <cffile file="../logs/last_error_#arguments.localPendingRewardsCycle#.log" action="append" output="#cfcatch.message# #cfcatch.detail#">
+
+    </cfcatch>
+    </cftry>
+   
+
+    <!--- If Taps operation mode is set to ON... --->
+    <cfif #operationMode# EQ "#application.mode_desc_yes#">
+
+       <!--- Save to log the information of blockchain confirmation of the sent transaction batch --->
+       <cffile file="../logs/batch_result_#arguments.localPendingRewardsCycle#.log" action="append" output="Applied: #blockchainConfirmed# Hash: #transactionHash#">
       
-      <!--- Then, update the payments result and total, in the local database --->
-      <cfquery name="update_local" datasource="ds_taps">   
-          UPDATE payments SET
-             <cfif #ArrayLen(errorArray)# EQ 0>RESULT = 'paid'<cfelse>RESULT = 'errors'</cfif>,
-             TOTAL = #totalPaid#
-          WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
-          AND CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
-          AND DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy')
-       </cfquery>
+       <!--- Then, update the payments result, total and transaction hash, in the local database --->
+       <cfquery name="update_local" datasource="ds_taps">   
+             UPDATE payments SET
+                <cfif #blockchainConfirmed# EQ true>RESULT = 'paid'<cfelse>RESULT = 'errors'</cfif>,
+                TOTAL = #totalPaid#,
+                <cfif #len(transactionHash)# GT 45 AND #len(transactionHash)# LT 60>TRANSACTION_HASH = <cfqueryparam value="#transactionHash#" sqltype="CF_SQL_VARCHAR" maxlength="70"><cfelse>TRANSACTION_HASH = ''</cfif>
+             WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+             AND CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
+             AND DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy')
+        </cfquery>
 
-
+        <!--- Update the delegatorsPayments result and hash, in the local database --->
+        <cfquery name="update_local_delegatorsPayments" datasource="ds_taps">   
+             UPDATE delegatorsPayments SET
+                <cfif #blockchainConfirmed# EQ true>RESULT = 'applied'<cfelse>RESULT = 'failed'</cfif>,
+                <cfif #len(transactionHash)# GT 45 AND #len(transactionHash)# LT 60>TRANSACTION_HASH = <cfqueryparam value="#transactionHash#" sqltype="CF_SQL_VARCHAR" maxlength="70"><cfelse>TRANSACTION_HASH = ''</cfif>
+             WHERE BAKER_ID = <cfqueryparam value="#application.bakerId#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+             AND CYCLE = <cfqueryparam value="#arguments.localPendingRewardsCycle#" sqltype="CF_SQL_NUMERIC" maxlength="50">
+             AND DATE = parsedatetime(<cfqueryparam value="#paymentDate#" sqltype="CF_SQL_VARCHAR" maxlength="20">, 'MM-dd-yyyy')
+        </cfquery>
+    <cfelse>
+       <!--- Save to log the information that there were no transactions, as we are simulating --->
+       <cffile file="../logs/batch_result_#arguments.localPendingRewardsCycle#.log" action="append" output="Simulation only. No transactions were sent to Tezos blockchain.">
+    </cfif>
 
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->
 
-       <!--- Bondpoolers payment is only available through the use of Native Wallet, so check it --->
-       <cfif #fundsOrigin# EQ "native">
+       <!--- Bondpoolers payment will only be done if delegators payments were successfull, so check it --->
+       <cfif #blockchainConfirmed# EQ true>
 
        <!--- Check if configuration is set to do bondpoolers payment --->
        <cfinvoke component="components.database" method="getBondPoolSettings" returnVariable="bondPoolSettings">
@@ -323,6 +331,9 @@
 
              <!--- Check if delegators got paid, otherwise abort (as it would distribute all rewards to bondpoolers) --->
 	     <cfif #totalPaid# GT 0>
+
+               <!--- Wait for operation to finish safely before going into another one --->
+               <cfsleep time = "#threeMinutes#">
 	     
 	       <cfset var totalCycleRewards = 0>
 	       <cfset var totalDelegatorRewardsPaid = 0>
@@ -358,7 +369,7 @@
 	       <cfinvoke component="components.database" method="getBondPoolMembers" sortForPayment="true" returnVariable="members">
 
 	       <!--- Initialize TezosJ_SDK Transaction Batch --->
-	       <cfset result = myWallet.clearTransactionBatch()>
+	       <cfset void = myWallet.clearTransactionBatch()>
 
 	       <!--- Loop through list of bondpoolers from local database, ordered by total and isManager --->
 	       <cfloop query="members">
@@ -380,7 +391,7 @@
 
                     <cfif #memberRewardsPayment# GT 0>
 		       <!--- Add payment transaction information to transaction batch --->
-		       <cfset result = myWallet.addTransactionToBatch("#from#", "#members.address#", #JavaCast("BigDecimal", memberRewardsPayment)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+		       <cfset void = myWallet.addTransactionToBatch("#from#", "#members.address#", #JavaCast("BigDecimal", memberRewardsPayment)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
                     </cfif>
 
 		    <!--- Identifies pool administrator --->
@@ -395,7 +406,7 @@
 	       
                <cfif #totalAdmFees# GT 0>
 	          <!--- Add a transaction to pay administrative fees to the manager --->
-	          <cfset result = myWallet.addTransactionToBatch("#from#", "#poolAdministrator#", #JavaCast("BigDecimal", totalAdmFees)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
+	          <cfset void = myWallet.addTransactionToBatch("#from#", "#poolAdministrator#", #JavaCast("BigDecimal", totalAdmFees)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#) >
                </cfif>
 
 	       <!--- If Taps operation mode is set to ON, then send transaction batch for real, otherwise, don't --->
@@ -413,25 +424,22 @@
                      <cfdirectory action = "create" directory="#strPath#/logs" />
                   </cfif>
 
-		  <cffile file="../logs/bondPool_transactions.log" action="write" output="">
 		  <cfloop array="#transactions#" index="i">
-		     <cffile file="../logs/bondPool_transactions.log" action="append" output="#i.getFrom()#, #i.getTo()#, #i.getAmount()#, #i.getFee()# ">
+		     <cffile file="../logs/bondPool_transactions_#arguments.localPendingRewardsCycle#.log" action="append" output="#i.getFrom()#, #i.getTo()#, #i.getAmount()#, #i.getFee()# ">
 		  </cfloop>
 	       </cfif>
 
              </cfif>
           </cfif>
        </cfif> <!--- Bondpool Settings status is true? --->
-       </cfif> <!--- Funds origin is native wallet? --->
+       </cfif> <!--- Delegators payments was successfull? --->
        <!--- v1.0.3 BONDPOOLERS PAYMENT --->
 
 
 
-      <cfif #fundsOrigin# EQ "native">
-         <!--- "Close" the native wallet --->
-         <cfset myWallet = "">
-         <cfset TezosJ = "">
-      </cfif>
+       <!--- "Close" the native wallet --->
+       <cfset myWallet = "">
+       <cfset TezosJ = "">
 
       <!--- Restore default Lucee Administrator settings for request timeout --->
       <cfsetting requestTimeout = #fiftySeconds#>
@@ -710,6 +718,9 @@
 
          <!--- Check and correct to six decimals places on tables payments and delegatorsPayments --->
          <cfinvoke component="components.database" method="checkSixDecimals" returnVariable="checkDecimalsResult">
+
+         <!--- Add TRANSACTION_HASH column to tables payments and delegatorsPayments --->
+         <cfinvoke component="components.database" method="addTxHashFields" returnVariable="addTxHashColumnResult">
 
       <cfcatch>
       </cfcatch>

@@ -137,7 +137,7 @@
             <cfif #updateResult# EQ "true">
                <cfif #settings.funds_origin# EQ "native" and #len(settings.wallet_hash)# EQ 0>
                   <script language="javascript">
-                     alert('In native wallet mode, TAPS requires a native wallet to be configured first! Please go to menu option WALLET and create your wallet.');
+                     alert('TAPS requires a native wallet to be configured first! Please go to menu option WALLET and create your wallet.');
                      $("##idRangeTable").find("input,button,textarea,select,range,span").attr("disabled", "disabled");
                      $("##idRangeTable").find("input,button,textarea,select,range,span").attr("readonly", "readonly");
                      $("##idRangeTable").find("input,button,textarea,select,range,span").css('color', 'grey');

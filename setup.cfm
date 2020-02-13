@@ -621,7 +621,7 @@
 
                <!--- Otherwise, we will show the radio buttons, so the user can choose --->
 
-               <div class="radio">
+               <div class="radio" style="visibility:collapse;display:none;">
 
                   <span class="text-input-taps">When distributing rewards to delegators, use resources from:</span><br><input type="text" class="required" id="idOptFunding_req" value="&nbsp;Required" readonly><br>
                   

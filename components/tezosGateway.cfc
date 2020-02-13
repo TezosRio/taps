@@ -167,7 +167,7 @@
       <cfloop collection="#rewards#" item="key">
          <cfset QueryAddRow(queryRewards, 1)> 
          <cfset QuerySetCell(queryRewards, "baker_id", javacast("string", "#arguments.bakerID#"))> 
-         <cfset QuerySetCell(queryRewards, "cycle", javacast("integer", "#rewards[key].cycle#"))> 
+         <cfset QuerySetCell(queryRewards, "cycle", javacast("integer", "#rewards[key].cycle#"))>
          <cfset QuerySetCell(queryRewards, "status", javacast("string", "#rewards[key].status.status#"))> 
       </cfloop>
 

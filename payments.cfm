@@ -72,7 +72,13 @@
 		              <td align="center" >#delegatorsPayments.cycle[i]#</td>
 		              <td align="center" >#delegatorsPayments.address[i]#</td>
 		              <td align="center" >#DateFormat(delegatorsPayments.date[i], 'MM/DD/YYYY')#</td>
-		              <td align="center" >#delegatorsPayments.result[i]#</td>
+                          
+                              <cfif #delegatorsPayments.transaction_hash[i]# NEQ "">
+		                 <td align="center" style="text-decoration:underline;"><a href="#application.blockExplorer##delegatorsPayments.transaction_hash[i]#">#delegatorsPayments.result[i]#</a></td>
+                              <cfelse>
+                                 <td align="center">#delegatorsPayments.result[i]#</td>
+                              </cfif>
+
 		              <td align="center" >#LSNumberFormat(delegatorsPayments.total[i], '999,999,999,999.999999')#&nbsp;#application.tz#</td>
                               <cfset totalSum = totalSum + #delegatorsPayments.total[i]#>
 		             

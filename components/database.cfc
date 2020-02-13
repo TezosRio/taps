@@ -315,7 +315,7 @@
    <cffunction name="getDelegatorsPayments" returnType="query">
 
       <cfquery name="get_local_delegators_payments" datasource="ds_taps">
-         SELECT baker_id, cycle, date, address, result, total
+         SELECT baker_id, cycle, date, address, result, total, transaction_hash
          FROM delegatorsPayments
          ORDER BY BAKER_ID, CYCLE DESC, DATE DESC, RESULT, TOTAL DESC
       </cfquery>
@@ -781,6 +781,30 @@
 	   <cftry>
 	      <cfquery name="checkDelegatorsPaymentsDecimals" datasource="ds_taps">
 		   ALTER TABLE delegatorsPayments ALTER COLUMN total DECIMAL(20,6) NOT NULL;
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+      <cfreturn result>
+   </cffunction>
+
+   <!--- Adds TRANSACTION_HASH fields to tables payments and delegatorsPayments --->
+   <cffunction name="addTxHashFields" returntype="string">
+      <cfset var result = true>
+
+	   <cftry>
+	      <cfquery name="addPaymentsTxHash" datasource="ds_taps">
+		   ALTER TABLE payments ADD COLUMN TRANSACTION_HASH VARCHAR(70) NULL;
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+
+	   <cftry>
+	      <cfquery name="addDelegatorsPaymentsTxHash" datasource="ds_taps">
+		   ALTER TABLE delegatorsPayments ADD COLUMN TRANSACTION_HASH VARCHAR(70) NULL;
 	      </cfquery>
 	   <cfcatch type="any">
 	      <cfset result = false>
