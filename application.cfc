@@ -73,10 +73,10 @@
        <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
        <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
        <cfset application.provider = "https://tezos-prod.cryptonomic-infra.tech"> <!--- Tezos node to connect to --->
-       <cfset application.paymentRetries = 1>  <!--- Number of times Taps will try to pay if it failed in confirming from blockchain --->
+       <cfset application.paymentRetries = 3>  <!--- Number of times Taps will try to pay if it failed in confirming from blockchain --->
        <cfset application.gasLimit = 15400>    <!--- gastLimit for Tezos blockchain operations --->
        <cfset application.storageLimit = 300>  <!--- storageLimit for Tezos blockchain operations ---> 
-       <cfset application.numberOfBlocksToWait = 1> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->
+       <cfset application.numberOfBlocksToWait = 5> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->
        <cfset application.blockExplorer = "https://tezblock.io/transaction/"> <!--- URL of prefered block explorer to check a transaction --->
        <cfset application.minutesBetweenTries = 1> <!--- Number of minutes to wait between each payment try in the loop --->
        <cfset application.tz_default_operation_fee = "0.00294"> <!--- Default fee to be used in transactions --->
