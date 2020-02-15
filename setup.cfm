@@ -14,7 +14,7 @@
 <cfset user="">
 <cfset passdw="">
 <cfset passdw2="">
-<cfset luceePort="">
+<cfset luceePort="#application.port#">
 <cfset tezosClientPath="">
 <cfset tezosNodeAlias="">
 <cfset tezosBaseDir="">
@@ -224,7 +224,7 @@
       <cfset user="#settings.user_name#">
       <cfset passdw="XXXXXXXXXX">
       <cfset passdw2="XXXXXXXXXX">
-      <cfset luceePort="#settings.application_port#">
+      <cfset luceePort="#application.port#">
       <cfset tezosClientPath="#settings.client_path#">
       <cfset tezosNodeAlias="#settings.node_alias#">
       <cfset tezosBaseDir="#settings.base_dir#">
@@ -592,7 +592,7 @@
 	 <td></td>
       </tr>
 
-      <tr>
+      <tr style="display:none;">
 	 <td>
 	    <label>
 	       <span class="text-input-taps">Lucee Server Port</span><input type="text" class="required" id="idLuceePort_req" value="&nbsp;Required" readonly>

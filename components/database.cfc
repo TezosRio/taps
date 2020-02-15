@@ -19,7 +19,7 @@
    <cffunction name="getSettings" returnType="query">
       <!--- Get settings from local database --->
       <cfquery name="getSettings" datasource="ds_taps">
-         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir, wallet_hash, wallet_salt, phrase, app_phrase, funds_origin
+         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir, wallet_hash, wallet_salt, phrase, app_phrase, funds_origin, proxy_server, proxy_port, provider, gas_limit, storage_limit, transaction_fee, block_explorer, num_blocks_wait, payment_retries, min_between_retries
          FROM settings
       </cfquery>
       <cfif #getSettings.recordCount# GT 0>
@@ -810,6 +810,99 @@
 	      <cfset result = false>
 	   </cfcatch>
 	   </cftry>
+      <cfreturn result>
+   </cffunction>
+
+   <!--- Adds version 1.2.0 new fields to table settings --->
+   <cffunction name="addV120Fields" returntype="string">
+      <cfset var result = true>
+
+	   <cftry>
+	      <cfquery name="add1" datasource="ds_taps">
+		   ALTER TABLE settings ADD COLUMN proxy_server VARCHAR(70) DEFAULT '' NULL;
+		   ALTER TABLE settings ADD COLUMN proxy_port INTEGER DEFAULT #application.proxyPort# NOT NULL;
+                   ALTER TABLE settings ADD COLUMN provider VARCHAR(70) DEFAULT '#application.provider#' NOT NULL;
+		   ALTER TABLE settings ADD COLUMN gas_limit INTEGER DEFAULT #application.gasLimit# NOT NULL;
+		   ALTER TABLE settings ADD COLUMN storage_limit INTEGER DEFAULT #application.storageLimit# NOT NULL;
+		   ALTER TABLE settings ADD COLUMN transaction_fee DECIMAL(20,6) DEFAULT #application.tz_default_operation_fee# NOT NULL;
+                   ALTER TABLE settings ADD COLUMN block_explorer VARCHAR(70) DEFAULT '#application.blockExplorer#' NOT NULL;
+                   ALTER TABLE settings ADD COLUMN num_blocks_wait INTEGER DEFAULT #application.numberOfBlocksToWait# NOT NULL;
+                   ALTER TABLE settings ADD COLUMN payment_retries INTEGER DEFAULT #application.paymentRetries# NOT NULL;
+                   ALTER TABLE settings ADD COLUMN min_between_retries INTEGER DEFAULT #application.minutesBetweenTries# NOT NULL;
+	      </cfquery>
+	   <cfcatch type="any">
+	      <cfset result = false>
+	   </cfcatch>
+	   </cftry>
+
+      <cfreturn result>
+   </cffunction>
+
+   <!--- Update settings configuration in local database --->
+   <cffunction name="updateSettings">
+      <cfargument name="bakerID" required="true" type="string">
+      <cfargument name="proxy_server" required="true" type="string">
+      <cfargument name="proxy_port" required="true" type="string">
+      <cfargument name="provider" required="true" type="string">
+      <cfargument name="payment_retries" required="true" type="string">
+      <cfargument name="gas_limit" required="true" type="string">
+      <cfargument name="storage_limit" required="true" type="string">
+      <cfargument name="num_blocks_wait" required="true" type="string">
+      <cfargument name="block_explorer" required="true" type="string">
+      <cfargument name="min_between_retries" required="true" type="string">
+      <cfargument name="transaction_fee" required="true" type="string">
+      <cfargument name="default_fee" required="true" type="string">
+      <cfargument name="update_freq" required="true" type="string">
+      <cfargument name="lucee_port" required="true" type="string">
+
+      <cfset var result = false>
+      
+      <!--- Test if all fields are filled --->
+      <cfif len(#arguments.bakerID#) GT 0 and
+            len(#arguments.proxy_port# ) GT 0 and
+            len(#arguments.provider#) GT 0 and
+            len(#arguments.payment_retries#) GT 0 and
+            len(#arguments.gas_limit#) GT 0 and
+            len(#arguments.storage_limit#) GT 0 and
+            len(#arguments.num_blocks_wait#) GT 0 and
+            len(#arguments.block_explorer#) GT 0 and
+            len(#arguments.min_between_retries#) GT 0 and
+            len(#arguments.transaction_fee#) GT 0 and
+            len(#arguments.default_fee#) GT 0 and
+            len(#arguments.update_freq#) GT 0 and
+            len(#arguments.lucee_port#) GT 0 >
+
+
+		<cftry>
+
+		 <cfquery name="update_settings" datasource="ds_taps">
+		    UPDATE settings SET
+		       proxy_server = <cfqueryparam value="#arguments.proxy_server#" sqltype="CF_SQL_VARCHAR" maxlength="70">, 
+                       proxy_port = <cfqueryparam value="#arguments.proxy_port#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       provider = <cfqueryparam value="#arguments.provider#" sqltype="CF_SQL_VARCHAR" maxlength="70">,
+                       payment_retries = <cfqueryparam value="#arguments.payment_retries#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       gas_limit = <cfqueryparam value="#arguments.gas_limit#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       storage_limit = <cfqueryparam value="#arguments.storage_limit#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       num_blocks_wait = <cfqueryparam value="#arguments.num_blocks_wait#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       block_explorer = <cfqueryparam value="#arguments.block_explorer#" sqltype="CF_SQL_VARCHAR" maxlength="70">,
+                       min_between_retries = <cfqueryparam value="#arguments.min_between_retries#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       transaction_fee = <cfqueryparam value="#arguments.transaction_fee#" sqltype="CF_SQL_DECIMAL" maxlength="10">,
+                       default_fee = <cfqueryparam value="#arguments.default_fee#" sqltype="CF_SQL_DECIMAL" maxlength="10">,
+                       update_freq = <cfqueryparam value="#arguments.update_freq#" sqltype="CF_SQL_NUMERIC" maxlength="10">,
+                       application_port = <cfqueryparam value="#arguments.lucee_port#" sqltype="CF_SQL_NUMERIC" maxlength="10"> 
+                    WHERE BAKER_ID = <cfqueryparam value="#arguments.bakerID#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+		 </cfquery>
+		 <cfset result = true>
+
+		<cfcatch>
+		   <cfset result = false>
+		</cfcatch>
+		</cftry>
+
+      <cfelse>
+	 <cfset result = false>
+      </cfif>
+
       <cfreturn result>
    </cffunction>
 

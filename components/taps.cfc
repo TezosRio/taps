@@ -722,6 +722,9 @@
          <!--- Add TRANSACTION_HASH column to tables payments and delegatorsPayments --->
          <cfinvoke component="components.database" method="addTxHashFields" returnVariable="addTxHashColumnResult">
 
+         <!--- Add addV120Fields to table settings --->
+         <cfinvoke component="components.database" method="addV120Fields" returnVariable="addV120NewFields">
+
       <cfcatch>
       </cfcatch>
       </cftry>

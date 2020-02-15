@@ -288,7 +288,7 @@ var MainController = function ($scope, $http, $interval)
        $interval(function (i)
        {
 
-         $http.get('http://127.0.0.1:8888/taps/getBalance.cfm').success(function(data, status, headers, config)
+         $http.get('http://127.0.0.1:#application.port#/taps/getBalance.cfm').success(function(data, status, headers, config)
          {
   
             $scope.balance = data;

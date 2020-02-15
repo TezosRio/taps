@@ -58,6 +58,9 @@
                     <a href="menu.cfm?opt=setup" id="item-menu" name="setup">SETUP</a>
                 </li>
                 <li>
+                    <a href="menu.cfm?opt=settings" id="item-menu" name="settings">SETTINGS</a>
+                </li>
+                <li>
                     <a href="menu.cfm?opt=status" id="item-menu" name="status">STATUS</a>
                 </li>
                 <li>

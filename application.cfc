@@ -51,7 +51,7 @@
        <cfset application.tz = "&##42793;">
        <cfset application.version = "1.2.0">
        <cfset application.militez = 1000000>
-       <cfset application.port = 8888>
+       <cfset application.port = #CGI.SERVER_PORT#>
        <cfset application.mode_no = "0">
        <cfset application.mode_try = "1">
        <cfset application.mode_yes = "2">
@@ -73,7 +73,7 @@
        <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
        <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
        <cfset application.provider = "https://tezos-prod.cryptonomic-infra.tech"> <!--- Tezos node to connect to --->
-       <cfset application.paymentRetries = 3>  <!--- Number of times Taps will try to pay if it failed in confirming from blockchain --->
+       <cfset application.paymentRetries = 1>  <!--- Number of times Taps will try to pay if it failed in confirming from blockchain --->
        <cfset application.gasLimit = 15400>    <!--- gastLimit for Tezos blockchain operations --->
        <cfset application.storageLimit = 300>  <!--- storageLimit for Tezos blockchain operations ---> 
        <cfset application.numberOfBlocksToWait = 5> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->

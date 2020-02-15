@@ -39,6 +39,22 @@
 	      <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
 
 	      <cfif #settings.recordCount# GT 0>
+                 <!--- User has configured TAPS successfully --->
+
+                 <!--- So lets set some application variables with the saved settings --->
+	         <cfset application.proxyServer = "#settings.proxy_server#">
+	         <cfset application.proxyPort = #settings.proxy_port#>
+	         <cfset application.provider = "#settings.provider#">
+	         <cfset application.paymentRetries = #settings.payment_retries#>
+	         <cfset application.gasLimit = #settings.gas_limit#>
+	         <cfset application.storageLimit = #settings.storage_limit#>
+	         <cfset application.numberOfBlocksToWait = #settings.num_blocks_wait#>
+	         <cfset application.blockExplorer = "#settings.block_explorer#">
+	         <cfset application.minutesBetweenTries = #settings.min_between_retries#>
+	         <cfset application.tz_default_operation_fee = "#settings.transaction_fee#">
+                 <cfset application.fee = "#settings.default_fee#">
+                 <cfset application.freq = "#settings.update_freq#">
+
 		 <cfif #len(settings.wallet_hash)# GT 0 and #len(settings.wallet_salt)# GT 0>
 		    <!--- User has configured TAPS successfully and also has created a native wallet --->
 
