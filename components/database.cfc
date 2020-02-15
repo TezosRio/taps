@@ -819,7 +819,7 @@
 
 	   <cftry>
 	      <cfquery name="add1" datasource="ds_taps">
-		   ALTER TABLE settings ADD COLUMN proxy_server VARCHAR(70) DEFAULT '' NULL;
+		   ALTER TABLE settings ADD COLUMN proxy_server VARCHAR(70) DEFAULT '';
 		   ALTER TABLE settings ADD COLUMN proxy_port INTEGER DEFAULT #application.proxyPort# NOT NULL;
                    ALTER TABLE settings ADD COLUMN provider VARCHAR(70) DEFAULT '#application.provider#' NOT NULL;
 		   ALTER TABLE settings ADD COLUMN gas_limit INTEGER DEFAULT #application.gasLimit# NOT NULL;
