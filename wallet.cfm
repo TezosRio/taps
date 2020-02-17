@@ -15,6 +15,8 @@
 <cfset save = false>
 <cfset passdw = "">
 <cfset wrongLogin = "">
+<cfset delegate = "">
+
 
 <cfif isDefined('form.isCreating')>
    <cfset isCreating = #form.isCreating#>
@@ -255,6 +257,55 @@
 
 	   }
 
+           function setDelegate()
+	   {
+              var myDelegate = document.getElementById('idDelegate').value;
+              var myAddress = document.getElementById('idAddress').value;
+
+              // Undelegate.
+              if (myDelegate.length == 0)
+              {
+                 if (!confirm('Delegate is empty. This will undelegate. Do you really want to undelegate?'))
+	            return false;
+                
+              // Undelegate
+              // Calls Coldfusion method to update local database.
+              $.get('delegation.cfm?undelegate=true&delegator=' + myAddress, function( data )
+                        {
+                          var result = data.trim();
+                          if (result == 'true')
+                          { alert('Undelegation operation sent successfully. Wait some minutes and check blockchain for results'); } else { alert( result ); return false; }
+                        }
+                    );
+
+                 return true;
+              }
+
+              // Validate address.
+              if ( (myDelegate.substr(0,2).toLowerCase() != 'tz') && (myDelegate.substr(0,2).toLowerCase() != 'kt') )
+              {
+                 alert('Invalid delegate address. Please try again');
+                 return false;
+              }
+
+
+              if (!confirm('Do you really want to delegate to ' + myDelegate + '?'))
+	         return false;
+              
+              // Delegate!
+              // Calls Coldfusion method to update local database.
+              $.get('delegation.cfm?delegate=true' +
+                    '&delegate_to=' + myDelegate + '&delegator=' + myAddress, function( data )
+                        {
+                          var result = data.trim();
+                          if (result == 'true')
+                          { alert('Delegation operation sent successfully. Wait some minutes and check blockchain for results'); } else { alert( result ); return false; }
+                        }
+                    );
+
+              return true; 
+             
+ 	   }
       </script>
 
 	<style>
@@ -290,6 +341,9 @@
             <cfif #len(session.myWallet)# GT 0>
                <!--- User has configured TAPS successfully and also created a native wallet --->
                <cfset hasWallet = true>
+
+               <!--- Get delegate --->
+               <cfset delegate = #settings.delegate#>
             <cfelse>
                <cfset hasWallet = false>
             </cfif>
@@ -475,6 +529,18 @@
 			        </label>
 		             </td>
 		          </tr>
+		          <tr>
+		             <td>
+                                <span class="text-input-taps">Delegate</span><br>
+                                <div class="input-group add-on" style="width:480px;">
+                                   <input type="text" id="idDelegate" name="delegate" class="input-taps form-control" size="45" value="#delegate#">
+                                   <div class="input-group-btn" style="padding-left:10px;">
+                                      <button type="button" class="botao-taps" id="idSetDelegate" onClick="javascript:setDelegate();">SET</button>
+                                   </div>
+                                </div>
+		             </td>
+		          </tr>
+
 		          <tr><td>&nbsp;</td></tr>
 		          <tr>
 		             <td>

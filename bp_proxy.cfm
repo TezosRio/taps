@@ -81,9 +81,6 @@
          <cfset application.fee="#url.default_fee#">
          <cfset application.freq="#url.update_freq#">
          <cfset application.port="#url.lucee_port#">
-
-
-
          #result#
       </cfif>
    </cfif>

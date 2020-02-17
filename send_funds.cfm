@@ -78,7 +78,7 @@
                <cfset postValidation = "Source and destination address cannot be the same. Operation cancelled">
             <cfelse>
                <!--- Do send funds! --->
-               <cfset resultSend = myWallet.send("#from#", "#destination#", #JavaCast("BigDecimal", amount)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "", "")>
+               <cfset resultSend = myWallet.send("#from#", "#destination#", #JavaCast("BigDecimal", amount)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#, "#application.gasLimit#", "#application.storageLimit#")>
             </cfif>
          <cfelse>
             <cfset resultSend = "Authentication failure. Could not open the wallet. Operation cancelled">

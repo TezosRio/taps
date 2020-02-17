@@ -19,7 +19,7 @@
    <cffunction name="getSettings" returnType="query">
       <!--- Get settings from local database --->
       <cfquery name="getSettings" datasource="ds_taps">
-         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir, wallet_hash, wallet_salt, phrase, app_phrase, funds_origin, proxy_server, proxy_port, provider, gas_limit, storage_limit, transaction_fee, block_explorer, num_blocks_wait, payment_retries, min_between_retries
+         SELECT baker_id, default_fee, update_freq, user_name, pass_hash, application_port, client_path, node_alias, status, mode, hash_salt, base_dir, wallet_hash, wallet_salt, phrase, app_phrase, funds_origin, proxy_server, proxy_port, provider, gas_limit, storage_limit, transaction_fee, block_explorer, num_blocks_wait, payment_retries, min_between_retries, delegate
          FROM settings
       </cfquery>
       <cfif #getSettings.recordCount# GT 0>
@@ -819,6 +819,7 @@
 
 	   <cftry>
 	      <cfquery name="add1" datasource="ds_taps">
+                   ALTER TABLE settings ADD COLUMN delegate VARCHAR(50) DEFAULT '';
 		   ALTER TABLE settings ADD COLUMN proxy_server VARCHAR(70) DEFAULT '';
 		   ALTER TABLE settings ADD COLUMN proxy_port INTEGER DEFAULT #application.proxyPort# NOT NULL;
                    ALTER TABLE settings ADD COLUMN provider VARCHAR(70) DEFAULT '#application.provider#' NOT NULL;
@@ -906,6 +907,36 @@
       <cfreturn result>
    </cffunction>
 
+   <!--- Update delegate in local database --->
+   <cffunction name="updateDelegate">
+      <cfargument name="bakerID" required="true" type="string">
+      <cfargument name="delegate" required="true" type="string">
+
+      <cfset var result = false>
+      
+      <!--- Test if all fields are filled --->
+      <cfif len(#arguments.bakerID#) GT 0>
+
+		<cftry>
+
+		 <cfquery name="update_delegate" datasource="ds_taps">
+		    UPDATE settings SET
+		       delegate = <cfqueryparam value="#arguments.delegate#" sqltype="CF_SQL_VARCHAR" maxlength="50"> 
+                    WHERE BAKER_ID = <cfqueryparam value="#arguments.bakerID#" sqltype="CF_SQL_VARCHAR" maxlength="50">
+		 </cfquery>
+		 <cfset result = true>
+
+		<cfcatch>
+		   <cfset result = false>
+		</cfcatch>
+		</cftry>
+
+      <cfelse>
+	 <cfset result = false>
+      </cfif>
+
+      <cfreturn result>
+   </cffunction>
 
 </cfcomponent>
 
