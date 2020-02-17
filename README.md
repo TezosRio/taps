@@ -95,12 +95,12 @@ Many features are not fully tested/implemented yet.
 - (FIXED) Page "PAYMENTS" and PDF report were showing 2 decimal places.
 - (NEW!) Easier SETUP. Now there is only the native wallet option and Lucee details were removed.
 - (NEW!) "SETTINGS" page lets user configure key aspects like:
-         - Default Tezos RPC provider
-         - Gas Limit and Storage Limit
-         - Default transaction fee
-         - EDIT Default baker rewards fee
-         - EDIT Update (fetch) frequency
-         - EDIT Proxy Server settings
+         * Default Tezos RPC provider
+         * Gas Limit and Storage Limit
+         * Default transaction fee
+         * EDIT Default baker rewards fee
+         * EDIT Update (fetch) frequency
+         * EDIT Proxy Server settings
 
 - (NEW!) Now Taps really checks if rewards payments transactions were applied to the Tezos blockchain and saves the transaction hash for later checking in the "PAYMENTS" menu. User may configure how many times to retry to distribute rewards if Taps has failed to pay the first time.
 - (NEW!) Now it is possible to DELEGATE from Taps native wallet to your preferred baker.
