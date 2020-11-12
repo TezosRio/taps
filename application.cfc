@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.2.0">
+       <cfset application.version = "1.2.1">
        <cfset application.militez = 1000000>
        <cfset application.port = #CGI.SERVER_PORT#>
        <cfset application.mode_no = "0">
@@ -79,7 +79,7 @@
        <cfset application.numberOfBlocksToWait = 5> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->
        <cfset application.blockExplorer = "https://tezblock.io/transaction/"> <!--- URL of prefered block explorer to check a transaction --->
        <cfset application.minutesBetweenTries = 1> <!--- Number of minutes to wait between each payment try in the loop --->
-       <cfset application.tz_default_operation_fee = "0.00294"> <!--- Default fee to be used in transactions --->
+       <cfset application.tz_default_operation_fee = "0.001800"> <!--- Default fee to be used in transactions --->
 
        <!--- Create needed database tables --->
        <cfinvoke component="components.environment" method="createTables">

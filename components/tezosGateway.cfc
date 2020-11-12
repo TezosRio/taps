@@ -155,20 +155,36 @@
       <cfset var rewards = "">
       <cfset var fetchedRewards = "">
 
-      <!--- v1.0.21 --->
-      <cfinvoke component="components.tezosGateway" method="doHttpRequest" url="https://mystique.tzkt.io/v3/rewards_split_cycles/#arguments.bakerID#" returnVariable="fetchedRewards">
+      <cfset currentcycle = getCurrentCycleNumber()>
+
+      <!--- v1.2.1 --->
+      <cfinvoke component="components.tezosGateway" method="doHttpRequest" url="https://api.tzkt.io/v1/rewards/bakers/#arguments.bakerID#" returnVariable="tzkt_reward">
+
 
       <!---  Parse JSON --->
-      <cfset rewards = #deserializeJson(fetchedRewards)# >
+      <cfset rewards = #deserializeJson(tzkt_reward)# >
 
       <!--- Create in-memory cached database-table --->
       <cfset queryRewards = queryNew("baker_id,cycle,status","varchar,integer,varchar")>
 
       <cfloop collection="#rewards#" item="key">
+         <cfset status = "">
+         <cfset cycle = "#rewards[key].cycle#">
+
+         <cfif #cycle# LT (#currentCycle# - 5)>
+            <cfset status = "rewards_delivered">
+         <cfelseif #cycle# LT #currentCycle#>
+            <cfset status = "rewards_pending">
+         <cfelseif #cycle# EQ #currentCycle#>         
+            <cfset status = "cycle_in_progress">
+         <cfelseif #cycle# GT #currentCycle#>
+            <cfset status = "cycle_pending">
+         </cfif>
+
          <cfset QueryAddRow(queryRewards, 1)> 
          <cfset QuerySetCell(queryRewards, "baker_id", javacast("string", "#arguments.bakerID#"))> 
-         <cfset QuerySetCell(queryRewards, "cycle", javacast("integer", "#rewards[key].cycle#"))>
-         <cfset QuerySetCell(queryRewards, "status", javacast("string", "#rewards[key].status.status#"))> 
+         <cfset QuerySetCell(queryRewards, "cycle", javacast("integer", "#cycle#"))>
+         <cfset QuerySetCell(queryRewards, "status", javacast("string", "#status#"))> 
       </cfloop>
 
       <cfreturn #queryRewards#>
@@ -183,8 +199,8 @@
       <cfset var delegators = "">
 
       <!--- Create in-memory cached database-table --->
-      <cfset queryDelegators = queryNew("baker_id,cycle,delegate_staking_balance,address,balance,share,rewards",
-                                "varchar,integer,numeric,varchar,numeric,numeric,numeric")>
+      <cfset queryDelegators = queryNew("baker_id,cycle,delegate_staking_balance,address,balance,share,rewards,total_rewards",
+                                "varchar,integer,numeric,varchar,numeric,numeric,numeric,numeric")>
 
       <!--- Get rewards info to obtain known cycles to loop --->
       <cfset rewardsInfo = getRewards("#arguments.bakerID#")>
@@ -200,95 +216,96 @@
 
                          <!--- v1.0.21 --->
                          <cfinvoke component="components.tezosGateway" method="doHttpRequest"
-                           url="https://mystique.tzkt.io/v3/rewards_split/#arguments.bakerID#?cycle=#rewardsInfo.cycle#"
+                           url="https://api.tzkt.io/v1/rewards/split/#arguments.bakerID#/#rewardsInfo.cycle#"
                            returnVariable="fetchedDelegators">
 		      
 			 <!---  Parse JSON --->
 			 <cfset delegators = deserializeJson(#fetchedDelegators#)>
-                         <cfset stakingBalance=#delegators.delegate_staking_balance#>
-			 <cfset arrayDelegators=#delegators.delegators_balance#>
+
+                         <cfset stakingBalance=#delegators.stakingBalance#>
+			 <cfset arrayDelegators=#delegators.delegators#>
 			 <cfset qtdDelegators=#ArrayLen(arrayDelegators)#>
-			 <cfset totalStakingBalance = #delegators.delegate_staking_balance#>                         
+			 <cfset totalStakingBalance = #delegators.stakingBalance#>                         
 
                          <cftry>
-		            <cfset blocksRewards = #delegators.blocks_rewards#>
+		            <cfset blocksRewards = #delegators.ownBlockRewards# + #delegators.extraBlockRewards#>
                          <cfcatch>
    		            <cfset blocksRewards = 0>   
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset endorsementsRewards = #delegators.endorsements_rewards#>
+		            <cfset endorsementsRewards = #delegators.endorsementRewards#>
                          <cfcatch>
 		            <cfset endorsementsRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset fees = #delegators.fees#>
+		            <cfset fees = #delegators.ownBlockFees# + #delegators.extraBlockFees#>
                          <cfcatch>
 		            <cfset fees = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset futureBlocksRewards = #delegators.future_blocks_rewards#>
+		            <cfset futureBlocksRewards = #delegators.futureBlockRewards#>
                          <cfcatch>
 		            <cfset futureBlocksRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset futureEndorsementsRewards = #delegators.future_endorsements_rewards#>
+		            <cfset futureEndorsementsRewards = #delegators.futureEndorsementRewards#>
                          <cfcatch>
 		            <cfset futureEndorsementsRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset gainFromDenounciation = #delegators.gain_from_denounciation#>	
+		            <cfset gainFromDenounciation = #delegators.doubleBakingRewards# + #delegators.doubleEndorsingRewards#>
                          <cfcatch>
   		            <cfset gainFromDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset revelationRewards = #delegators.revelation_rewards#>
+		            <cfset revelationRewards = #delegators.revelationRewards#>
                          <cfcatch>
 		            <cfset revelationRewards = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostDepositsFromDenounciation =  #delegators.lost_deposit_from_denounciation#>	
+		            <cfset lostDepositsFromDenounciation =  #delegators.doubleBakingLostDeposits# + #delegators.doubleEndorsingLostDeposits#>	
                          <cfcatch>
 		            <cfset lostDepositsFromDenounciation =  0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRewardsDenounciation = #delegators.lost_rewards_denounciation#>	
+		            <cfset lostRewardsDenounciation = #delegators.doubleBakingLostRewards# + #delegators.doubleEndorsingLostRewards#>
                          <cfcatch>
 		            <cfset lostRewardsDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostFeesDenounciation = #delegators.lost_fees_denounciation#>	
+		            <cfset lostFeesDenounciation = #delegators.doubleBakingLostFees# + #doubleEndorsingLostFees#>
                          <cfcatch>
 		            <cfset lostFeesDenounciation = 0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRevelationRewards =  #delegators.lost_revelation_rewards#>	
+		            <cfset lostRevelationRewards =  #delegators.revelationLostRewards#>	
                          <cfcatch>
 		            <cfset lostRevelationRewards =  0>
                          </cfcatch>
                          </cftry>
 
                          <cftry>
-		            <cfset lostRevelationFees = #delegators.lost_revelation_fees#>
+		            <cfset lostRevelationFees = #delegators.revelationLostFees#>
                          <cfcatch>
 		            <cfset lostRevelationFees = 0>
                          </cfcatch>
@@ -305,10 +322,11 @@
 					    <cfset QuerySetCell(queryDelegators, "baker_id", javacast("string", "#arguments.bakerID#"))> 
 					    <cfset QuerySetCell(queryDelegators, "cycle", javacast("integer", "#rewardsInfo.cycle#"))>
 					    <cfset QuerySetCell(queryDelegators, "delegate_staking_balance", javacast("long", "#stakingBalance#"))>  
-					    <cfset QuerySetCell(queryDelegators, "address", javacast("string", "#arrayDelegators[key].account.tz#"))> 
+					    <cfset QuerySetCell(queryDelegators, "address", javacast("string", "#arrayDelegators[key].address#"))> 
 					    <cfset QuerySetCell(queryDelegators, "balance", javacast("long", "#arrayDelegators[key].balance#"))> 
 					    <cfset QuerySetCell(queryDelegators, "share", javacast("string", "#share#"))> 
-					    <cfset QuerySetCell(queryDelegators, "rewards", javacast("long", "#LSNumberFormat(delegator_reward, '999999999999.999999')#"))> 
+					    <cfset QuerySetCell(queryDelegators, "rewards", javacast("long", "#LSNumberFormat(delegator_reward, '999999999999.999999')#"))>
+                                            <cfset QuerySetCell(queryDelegators, "total_rewards", javacast("long", "#LSNumberFormat(totalRewards, '999999999999.999999')#"))>
                             </cfif>		
 			 </cfloop>
 
@@ -411,97 +429,9 @@
       <cfargument name="cycle" required="true" type="string" />
 
       <cftry>
-	<cfinvoke component="components.tezosGateway" method="doHttpRequest"
-	url="https://mystique.tzkt.io/v3/rewards_split/#arguments.bakerID#?cycle=#arguments.cycle#"
-	returnVariable="rewardsInfo">
-
-	<cfset rewardsDetails = deserializeJson(rewardsInfo)>
-
-	 <cftry>
-	    <cfset blocksRewards = #rewardsDetails.blocks_rewards#>
-	 <cfcatch>
-	    <cfset blocksRewards = 0>   
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset endorsementsRewards = #rewardsDetails.endorsements_rewards#>
-	 <cfcatch>
-	    <cfset endorsementsRewards = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset fees = #rewardsDetails.fees#>
-	 <cfcatch>
-	    <cfset fees = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset futureBlocksRewards = #rewardsDetails.future_blocks_rewards#>
-	 <cfcatch>
-	    <cfset futureBlocksRewards = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset futureEndorsementsRewards = #rewardsDetails.future_endorsements_rewards#>
-	 <cfcatch>
-	    <cfset futureEndorsementsRewards = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset gainFromDenounciation = #rewardsDetails.gain_from_denounciation#>	
-	 <cfcatch>
-	    <cfset gainFromDenounciation = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset revelationRewards = #rewardsDetails.revelation_rewards#>
-	 <cfcatch>
-	    <cfset revelationRewards = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset lostDepositsFromDenounciation =  #rewardsDetails.lost_deposit_from_denounciation#>	
-	 <cfcatch>
-	    <cfset lostDepositsFromDenounciation =  0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset lostRewardsDenounciation = #rewardsDetails.lost_rewards_denounciation#>	
-	 <cfcatch>
-	    <cfset lostRewardsDenounciation = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset lostFeesDenounciation = #rewardsDetails.lost_fees_denounciation#>	
-	 <cfcatch>
-	    <cfset lostFeesDenounciation = 0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset lostRevelationRewards =  #rewardsDetails.lost_revelation_rewards#>	
-	 <cfcatch>
-	    <cfset lostRevelationRewards =  0>
-	 </cfcatch>
-	 </cftry>
-
-	 <cftry>
-	    <cfset lostRevelationFees = #rewardsDetails.lost_revelation_fees#>
-	 <cfcatch>
-	    <cfset lostRevelationFees = 0>
-	 </cfcatch>
-	 </cftry>
-
-	<cfset totalRewards =( (#blocksRewards# + #endorsementsRewards# + #fees# + #futureBlocksRewards# + #futureEndorsementsRewards# + #gainFromDenounciation# + #revelationRewards#) - (#lostDepositsFromDenounciation# + #lostRewardsDenounciation# + #lostFeesDenounciation# + #lostRevelationRewards# + #lostRevelationFees#) ) / militez >
+        <!--- v1.2.1 --->
+        <cfset delegators = getDelegators("#arguments.bakerID#", "#cycle#", "#cycle#")>
+	<cfset totalRewards = #LSNumberFormat((delegators.total_rewards / militez), '999999999999.999999')#>
 
       <cfcatch>
       </cfcatch>
