@@ -731,5 +731,147 @@
 
    </cffunction>
 
+
+   <!--- Added in version 1.2.2 --->
+   <cffunction name="sendCustomBatch">
+      <cfargument name="batch" required="true" type="query" />
+
+      <cfset var myWallet = "">
+      <cfset var from = "">
+      <cfset var TezosJ = "">
+      <cfset var passphrase = "">
+      <cfset var transactionHash = "">
+      <cfset var blockchainConfirmed = false>
+      <cfset var logOutput = "">
+      <cfset var resultJson = "">
+
+      <!--- Override Lucee Administrator settings for request timeout --->
+      <cfsetting requestTimeout = #twentyFourHours#>
+     
+      <!--- Create the logs folder, if it does not exist yet --->
+      <cfset strPath = ExpandPath( "./" ) />
+      <cfif Not DirectoryExists("#strPath#/logs")>
+         <cfdirectory action = "create" directory="#strPath#/logs" />
+      </cfif>
+
+      <!--- Instantiate TezosJ_SDK_plainJava and open the wallet --->
+      <cfset strPath = ExpandPath( "./" ) />
+
+      <!--- Get TezosJ_SDK TezosWallet class --->
+      <cfset tezosJ = createObject("java", "milfont.com.tezosj.model.TezosWallet", "#strPath#/#application.TezosJ_SDK_location#")>
+
+      <!--- Get user's settings from database --->
+      <cfinvoke component="components.database" method="getSettings" returnVariable="settings">
+
+      <!--- Decrypt passphrase from the local database with app password --->
+      <cfset passphrase = decrypt('#settings.app_phrase#', '#application.encSeed#')>
+
+      <!--- Authenticate the owner of wallet with passphrase --->
+      <cfinvoke component="components.database" method="authWallet" bakerId="#application.bakerId#" passdw="#passphrase#" returnVariable="authResult">
+      <cfif #authResult# EQ true>
+         <!--- Instantiate a new wallet from previously saved file --->
+         <cfset myWallet = tezosJ.init(true, "#strPath#/wallet/wallet.taps", "#passphrase#")>
+               
+         <!--- Change RPC provider --->
+         <cfset myWallet.setProvider("#application.provider#")>
+         <cfset from = "#myWallet.getPublicKeyHash()#">
+      </cfif>
+
+      <cftry>
+ 
+         <!--- Create/Clear new log files --->
+         <cfset logFilename = "../logs/customBatch_#datetimeformat(now(), "mmddyyyy_HHnnss")#.log">
+         <cffile file="#logFilename#" action="write" output="" nameConflict="overwrite" mode="777">
+
+         <!--- Initiate totalPaid variable with zero --->
+         <cfset totalPaid = 0>
+
+         <!--- Initialize/Clear TezosJ_SDK Transaction Batch --->
+         <cfset void = myWallet.clearTransactionBatch()>
+
+         <!--- Loop through lines of query and mount a collection (batch) of transactions that will be sent later --->  
+         <cfloop query="#arguments.batch#">
+            <!--- Initialize current payment value with zero --->
+            <cfset paymentValue = 0>
+
+            <!--- Get individual amount to send in current payment --->
+            <cfset paymentValue = #(arguments.batch.amount / application.militez)#>
+                      
+            <!--- Only consider a payment valid if value is higher than zero --->
+            <cfif #paymentValue# GT 0>
+
+	       <!--- Add payment transaction information to transaction batch (for sending later) --->
+               <cfset void = myWallet.addTransactionToBatch("#from#", "#arguments.batch.address#", #JavaCast("BigDecimal", paymentValue)#, #JavaCast("BigDecimal", application.tz_default_operation_fee)#)>
+
+               <!--- Define the message that will be saved in the log ---> 
+               <cfset logOutput = "Added to Batch: send transaction: #paymentValue# tez from #from# to #arguments.batch.address#"> 
+
+            <cfelse> <!--- Nothing to be paid, value is zero --->
+
+               <!--- Define the message that will be saved in the log ---> 
+               <cfset logOutput = "Ignored send to #arguments.batch.address# as value is 0"> 
+
+            </cfif>
+
+            <cfoutput>
+               <!--- Write log file with results in folder taps/logs --->
+               <cffile file="#logFilename#" action="append" output="#logOutput#">
+
+               <!--- Accumulate the total paid --->
+               <cfset totalPaid = totalPaid + #paymentValue#>
+            </cfoutput>
+
+         </cfloop> <!--- Loop through batch query lines --->
+
+         <!--- Write total info in log file, in folder taps/logs --->
+         <cffile file="#logFilename#" action="append" output="#chr(13)##chr(10)#Addresses  : #arguments.batch.recordCount#">
+         <cffile file="#logFilename#" action="append" output="Total paid : #totalPaid# tez #chr(13)##chr(10)#">
+
+         <!--- At this point we've got an entire collection (batch) of transactions ready to send --->
+
+         <cftry>
+            <!--- Send transaction batch to Tezos blockchain, using funds from native wallet, with TezosJ_SDK_plainJava library --->
+            <cfset resultJson = myWallet.flushTransactionBatch("#application.gasLimit#", "#application.storageLimit#")>
+
+            <!--- Extract transaction hash from result --->
+            <cfset resultStruct = #deserializeJson(resultJson)#>
+            <cfset transactionHash = "#replace(resultStruct.result, chr(34), '', 'all')#">
+            <cfset transactionHash = "#replace(transactionHash, chr(13), '', 'all')#">
+            <cfset transactionHash = "#replace(transactionHash, chr(10), '', 'all')#">
+
+            <!--- If transaction hash extracted is of unknown format, throws error --->
+            <cfif (#findNoCase("error", transactionHash)# GT 0) OR (#len(transactionHash)# LT 40) OR (#len(transactionHash)# GT 60)>
+               <cfthrow message = "#transactionHash#">
+            </cfif>
+
+            <!--- Wait for and check if batch transaction was confirmed in Tezos blockchain --->
+            <cfset blockchainConfirmed = myWallet.waitForAndCheckResult("#transactionHash#", #application.numberOfBlocksToWait#)>
+
+         <cfcatch>
+            <cfset blockchainConfirmed = false>
+            <!--- Save to log the error information --->
+            <cffile file="#logFilename#" action="append" output="Blockchain said there was an error. #cfcatch.message# #cfcatch.detail#">
+
+         </cfcatch>
+         </cftry>
+
+      <cfcatch>
+            <!--- Save to log the error information --->
+            <cffile file="#logFilename#" action="append" output="An error ocurred while trying to send batch operation. #cfcatch.message# #cfcatch.detail#">
+      </cfcatch>
+      </cftry>
+
+       <!--- "Close" the native wallet --->
+       <cfset myWallet = "">
+       <cfset TezosJ = "">
+
+      <!--- Restore default Lucee Administrator settings for request timeout --->
+      <cfsetting requestTimeout = #fiftySeconds#>
+
+      <cfreturn "#transactionHash#">
+
+   </cffunction>
+
+
 </cfcomponent>
 

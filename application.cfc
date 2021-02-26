@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.2.1">
+       <cfset application.version = "1.2.2">
        <cfset application.militez = 1000000>
        <cfset application.port = #CGI.SERVER_PORT#>
        <cfset application.mode_no = "0">
@@ -58,7 +58,7 @@
        <cfset application.mode_desc_no = "off">
        <cfset application.mode_desc_try = "simulation">
        <cfset application.mode_desc_yes = "on">
-       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.2.2.jar">
+       <cfset application.TezosJ_SDK_location = "lib/tezosj-sdk-plain-java-1.4.0.jar">
        <cfset application.tezosTransactionHashLength = 51>
        
        <!--- Some application variables initialization --->
@@ -72,12 +72,13 @@
        <cfset application.encSeed = "?73205!"> <!--- Used to hash sensible information along the code --->
        <cfset application.proxyServer="">      <!--- Proxy Server if you are behind a proxy/firewall  --->
        <cfset application.proxyPort="80">      <!--- Proxy port if you are behind a proxy/firewall    --->
-       <cfset application.provider = "https://tezos-prod.cryptonomic-infra.tech"> <!--- Tezos node to connect to --->
+       <cfset application.provider = "https://mainnet-tezos.giganode.io"> <!--- Tezos node to connect to --->
        <cfset application.paymentRetries = 1>  <!--- Number of times Taps will try to pay if it failed in confirming from blockchain --->
        <cfset application.gasLimit = 15400>    <!--- gastLimit for Tezos blockchain operations --->
        <cfset application.storageLimit = 300>  <!--- storageLimit for Tezos blockchain operations ---> 
-       <cfset application.numberOfBlocksToWait = 5> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->
+       <cfset application.numberOfBlocksToWait = 8> <!--- After Taps has sent a tx, how many blocks it checks to see if it was applied --->
        <cfset application.blockExplorer = "https://tezblock.io/transaction/"> <!--- URL of prefered block explorer to check a transaction --->
+       <cfset application.blockExplorerAlt = "https://tzstats.com/"> <!--- URL of alternative block explorer to check a transaction --->
        <cfset application.minutesBetweenTries = 1> <!--- Number of minutes to wait between each payment try in the loop --->
        <cfset application.tz_default_operation_fee = "0.001800"> <!--- Default fee to be used in transactions --->
 

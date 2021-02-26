@@ -310,7 +310,7 @@
 		 <td style="padding-left: 20px;">
 		    <label>
 		       <span class="text-input-taps">Tezos RPC Provider</span><input type="text" class="required" id="idProvider_req" value="&nbsp;Required" readonly>
-		       <input type="text" id="idProvider" name="provider" class="input-taps" size="50" placeholder="(Default https://tezos-prod.cryptonomic-infra.tech)" value="#provider#" maxlength="70">
+		       <input type="text" id="idProvider" name="provider" class="input-taps" size="50" placeholder="(Default #application.provider#)" value="#provider#" maxlength="70">
 		    </label>
 		 </td>
 		 <td></td>
@@ -415,7 +415,7 @@
 		 <td style="padding-left: 20px;">
 		    <label>
 		       <span class="text-input-taps">Number of blocks to wait for blockchain confirmation</span><input type="text" class="required" id="idNumberOfBlocks_req" value="&nbsp;Required" readonly>
-		       <cfinput type="text" id="idNumberOfBlocks" name="numberOfBlocks" class="input-taps" size="50" placeholder="(Default 5)" value="#numberOfBlocksToWait#">
+		       <cfinput type="text" id="idNumberOfBlocks" name="numberOfBlocks" class="input-taps" size="50" placeholder="(Default #application.numberOfBlocksToWait#)" value="#numberOfBlocksToWait#">
 		    </label>
 		 </td>
 		 <td></td>

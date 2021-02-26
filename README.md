@@ -93,6 +93,7 @@ Many features are not fully tested/implemented yet.
 - (NEW!) Bond Pool configuration and automatic payments!
 - (FIXED) Six decimal places accuracy payment - Solves "So-So" annotation on BakingBad.
 - (FIXED) Page "PAYMENTS" and PDF report were showing 2 decimal places.
+- (NEW!) Custom batch manual payments with CSV file importing - Community Funded Feature (by CryptoDelegate baker).
 
 ## Credits
 
