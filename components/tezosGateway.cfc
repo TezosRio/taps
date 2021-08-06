@@ -62,7 +62,7 @@
       <cfset tezosHead = #deserializeJSON(getHead())#>
 
       <!--- Gets the information we are interested in --->
-      <cfset currentCycle = #tezosHead.level.cycle#>
+      <cfset currentCycle = #tezosHead.level_info.cycle#>
 
       <cfreturn currentCycle>
    </cffunction>

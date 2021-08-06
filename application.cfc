@@ -49,7 +49,7 @@
        <!--- Create some application constants --->
        <!--- Do not change                     --->
        <cfset application.tz = "&##42793;">
-       <cfset application.version = "1.2.2">
+       <cfset application.version = "1.2.3">
        <cfset application.militez = 1000000>
        <cfset application.port = #CGI.SERVER_PORT#>
        <cfset application.mode_no = "0">
