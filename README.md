@@ -94,6 +94,8 @@ Many features are not fully tested/implemented yet.
 - (FIXED) Six decimal places accuracy payment - Solves "So-So" annotation on BakingBad.
 - (FIXED) Page "PAYMENTS" and PDF report were showing 2 decimal places.
 - (NEW!) Custom batch manual payments with CSV file importing - Community Funded Feature (by CryptoDelegate baker).
+- (FIXED) Now compatible with Granada protocol.
+
 
 ## Credits
 
